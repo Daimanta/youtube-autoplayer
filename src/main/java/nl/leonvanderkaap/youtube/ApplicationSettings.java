@@ -14,4 +14,6 @@ public class ApplicationSettings {
     private String ytdlp;
     private String tempfolder;
     private String vlc;
+    private boolean blockSponsors = true;
+    private String maxResolution = "1080p";
 }

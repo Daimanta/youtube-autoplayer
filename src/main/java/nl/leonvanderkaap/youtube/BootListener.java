@@ -24,6 +24,8 @@ public class BootListener {
         if (applicationSettings.getYtdlp() != null) LiveSettings.ytdlp = applicationSettings.getYtdlp();
         if (applicationSettings.getTempfolder() != null) LiveSettings.tempfolder = applicationSettings.getTempfolder();
         if (applicationSettings.getVlc() != null) LiveSettings.vlc = applicationSettings.getVlc();
+        LiveSettings.blockSponsors = applicationSettings.isBlockSponsors();
+        LiveSettings.maxResolution = applicationSettings.getMaxResolution();
 
         if (SystemUtils.IS_OS_WINDOWS) {
             if (LiveSettings.ytdlp == null) LiveSettings.ytdlp = "yt-dlp.exe";
