@@ -62,6 +62,8 @@ public class RequestService {
 
             // If we arrive here, the download has completed without error(?). We can now play the file
             playVideo(video, fullPath, fileIdName);
+            File target = new File(fullPath);
+            target.deleteOnExit();
 
             return null;
         });
