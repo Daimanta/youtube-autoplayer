@@ -104,8 +104,9 @@ public class RequestService {
     private boolean downloadVideo(String video, String fileIdName) {
         List<String> downloadArgumentList = new ArrayList<>();
         downloadArgumentList.add(LiveSettings.ytdlp);
-        downloadArgumentList.add("\""+video+"\"");
-        downloadArgumentList.addAll(List.of("-P", "\"" + LiveSettings.tempfolder + "\"", "-o", "\"" + fileIdName + "\""));
+        downloadArgumentList.add(wrap(video));
+        downloadArgumentList.add("--write-info-json");
+        downloadArgumentList.addAll(List.of("-P", wrap(LiveSettings.tempfolder), "-o", wrap(fileIdName)));
         downloadArgumentList.addAll(List.of("-f", String.format("\"best[height<=%s]\"", LiveSettings.maxResolution)));
         String[] downloadArguments = downloadArgumentList.toArray(new String[]{});
 
@@ -161,5 +162,9 @@ public class RequestService {
         } catch (Exception e) {
             log.warn("Play failed", e);
         }
+    }
+
+    private static String wrap(String str) {
+        return "\""+str+"\"";
     }
 }
