@@ -6,10 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -44,19 +41,21 @@ public class RequestService {
                 folderPath += File.separator;
             }
             String fullPath = folderPath + fileIdName;
+            log.debug(String.format("Downloading '%s'", video));
             boolean downloadSuccess = downloadVideo(video, fileIdName);
+            log.debug(String.format("Queueing '%s'", video));
             while (!fileIdName.equals(queue.peek()) && !queue.isEmpty()) {
                 try {
                     Thread.sleep(200);
                 } catch (Exception e) {
-                    queue.clear();
+                    queue.remove(fileIdName);
                     return null;
                 }
             }
 
             if (!downloadSuccess) {
                 log.warn("Download failed!");
-                if (!queue.isEmpty()) queue.poll();
+                queue.remove(fileIdName);
                 return null;
             }
 
@@ -105,26 +104,23 @@ public class RequestService {
     private boolean downloadVideo(String video, String fileIdName) {
         List<String> downloadArgumentList = new ArrayList<>();
         downloadArgumentList.add(LiveSettings.ytdlp);
-        downloadArgumentList.add(video);
-        downloadArgumentList.addAll(List.of("-P", LiveSettings.tempfolder, "-o", fileIdName));
-        downloadArgumentList.addAll(List.of("-f", String.format("best[height<=%s]", LiveSettings.maxResolution)));
+        downloadArgumentList.add("\""+video+"\"");
+        downloadArgumentList.addAll(List.of("-P", "\"" + LiveSettings.tempfolder + "\"", "-o", "\"" + fileIdName + "\""));
+        downloadArgumentList.addAll(List.of("-f", String.format("\"best[height<=%s]\"", LiveSettings.maxResolution)));
         String[] downloadArguments = downloadArgumentList.toArray(new String[]{});
 
         ProcessBuilder downloadProcessBuilder = new ProcessBuilder(downloadArguments);
         try {
             Process downloadProcess = downloadProcessBuilder.start();
-            downloadProcess.onExit().get();
+            // Don't remove the lines reading the output
+            // For some reason, some video downloads(especially bigger ones) break when the output is not read
+            BufferedReader in = new BufferedReader(new InputStreamReader(downloadProcess.getInputStream()));
+            while ((in.readLine()) != null);
+            Process downloadResult = downloadProcess.onExit().get();
+            if (downloadResult.exitValue() != 0) throw new RuntimeException();
         } catch (Exception e) {
             log.warn("Download failed: ", e);
-            while (!fileIdName.equals(queue.peek()) && queue.isEmpty()) {
-                try {
-                    Thread.sleep(200);
-                } catch (Exception ne) {
-                    queue.clear();
-                    return false;
-                }
-            }
-            queue.poll();
+            queue.remove(fileIdName);
             return false;
         }
         return true;
@@ -135,6 +131,7 @@ public class RequestService {
         playArgumentList.add(LiveSettings.vlc);
 
         if (LiveSettings.blockSponsors) {
+            log.debug("Building sponsorblock file");
             RestTemplate restTemplate = new RestTemplate();
             ResponseEntity<SponsorBlockVideoSegmentResponse[]> responseEntity = null;
             try {
@@ -154,7 +151,7 @@ public class RequestService {
         String[] playArguments = playArgumentList.toArray(new String[]{});
 
         ProcessBuilder playProcessBuilder = new ProcessBuilder(playArguments);
-
+        log.debug("Adding vlc video to queue");
         try {
             if (!queue.isEmpty()) {
                 queue.poll();
