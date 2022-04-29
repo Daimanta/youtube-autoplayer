@@ -1,5 +1,7 @@
 package nl.leonvanderkaap.youtube;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.springframework.http.ResponseEntity;
@@ -68,13 +70,20 @@ public class RequestService {
         });
     }
 
-    private String buildPlaylistFile(ResponseEntity<SponsorBlockVideoSegmentResponse[]> responseEntity, String fullPath, String id) throws IOException {
+    private String buildPlaylistFile(ResponseEntity<SponsorBlockVideoSegmentResponse[]> responseEntity, String fullPath, String title, String id) throws IOException {
         if (responseEntity != null && responseEntity.getStatusCode().is2xxSuccessful() && responseEntity.getBody() != null) {
             StringBuilder builder = new StringBuilder();
-            int start = 0;
-            int end = 0;
+            double start = 0.0;
+            double end = 0.0;
+            builder.append("#EXTM3U'\n");
+            builder.append("#EXTINF:-1,");
+            builder.append(title);
+            builder.append("\n");
             for (SponsorBlockVideoSegmentResponse segment: responseEntity.getBody()) {
-                end = segment.getSegment().get(0).intValue();
+                end = segment.getSegment().get(0);
+                builder.append("#EXTINF:-1,");
+                builder.append(title);
+                builder.append("\n");
                 builder.append("#EXTVLCOPT:start-time=");
                 builder.append(start);
                 builder.append("\n");
@@ -83,22 +92,40 @@ public class RequestService {
                 builder.append("\n");
                 builder.append(id);
                 builder.append("\n");
-                start = segment.getSegment().get(1).intValue();
+                start = segment.getSegment().get(1);
             }
+            builder.append("#EXTINF:-1,");
+            builder.append(title);
+            builder.append("\n");
             builder.append("#EXTVLCOPT:start-time=");
             builder.append(start);
             builder.append("\n");
             builder.append(id);
             builder.append("\n");
 
-            String playlistPath = fullPath + ".m3u";
-            BufferedWriter bw = new BufferedWriter(new FileWriter(playlistPath));
-            bw.write(builder.toString());
-            bw.close();
-            return playlistPath;
+            return createFileFromFullPath(fullPath, builder.toString());
         } else {
-            return fullPath;
+            return buildPlaylistFile(fullPath, title, id);
         }
+    }
+
+    private String buildPlaylistFile(String fullPath, String title, String id) throws IOException {
+        String formatString =
+                """
+                #EXTM3U
+                #EXTINF:-1,%s
+                %s
+                """;
+        String fileString = String.format(formatString, title, id);
+        return createFileFromFullPath(fullPath, fileString);
+    }
+
+    private String createFileFromFullPath(String fullPath, String fileContents) throws IOException{
+        String playlistPath = fullPath + ".m3u8";
+        BufferedWriter bw = new BufferedWriter(new FileWriter(playlistPath));
+        bw.write(fileContents);
+        bw.close();
+        return playlistPath;
     }
 
     private boolean downloadVideo(String video, String fileIdName) {
@@ -131,22 +158,9 @@ public class RequestService {
         List<String> playArgumentList = new ArrayList<>();
         playArgumentList.add(LiveSettings.vlc);
 
-        if (LiveSettings.blockSponsors) {
-            log.debug("Building sponsorblock file");
-            RestTemplate restTemplate = new RestTemplate();
-            ResponseEntity<SponsorBlockVideoSegmentResponse[]> responseEntity = null;
-            try {
-                responseEntity = restTemplate.getForEntity("https://sponsor.ajay.app/api/skipSegments?videoID=" + video, SponsorBlockVideoSegmentResponse[].class, Collections.emptyMap());
-            } catch (Exception ignored) {}
-            try {
-                playArgumentList.add(buildPlaylistFile(responseEntity, fullPath, fileIdName));
-            } catch (Exception e) {
-                playArgumentList.add(fullPath);
-            }
-        } else {
-            playArgumentList.add(fullPath);
-        }
-
+        String playListLocation = buildPlaylist(video, fullPath, fileIdName);
+        if (playListLocation == null) return;
+        playArgumentList.add(wrap(playListLocation));
         playArgumentList.add("--fullscreen");
         playArgumentList.addAll(List.of("--one-instance", "--playlist-enqueue"));
         String[] playArguments = playArgumentList.toArray(new String[]{});
@@ -161,6 +175,46 @@ public class RequestService {
             playProcess.onExit().get();
         } catch (Exception e) {
             log.warn("Play failed", e);
+        }
+    }
+
+    private String buildPlaylist(String video, String fullPath, String fileIdName) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        String title;
+        try {
+            File metadataFile = new File(fullPath+".info.json");
+            JsonNode node = objectMapper.readTree(metadataFile);
+            JsonNode titleNode = node.get("title");
+            title = titleNode.asText();
+            metadataFile.delete();
+        } catch (IOException e) {
+            log.warn("Could not read video metadata file");
+            return null;
+        }
+        if (LiveSettings.blockSponsors) {
+            log.debug("Building sponsorblock file");
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<SponsorBlockVideoSegmentResponse[]> responseEntity = null;
+            try {
+                responseEntity = restTemplate.getForEntity("https://sponsor.ajay.app/api/skipSegments?videoID=" + video, SponsorBlockVideoSegmentResponse[].class, Collections.emptyMap());
+            } catch (Exception ignored) {}
+            try {
+                return buildPlaylistFile(responseEntity, fullPath, title, fileIdName);
+            } catch (Exception e) {
+                try {
+                    return buildPlaylistFile(fullPath, title, fileIdName);
+                } catch (IOException ex) {
+                    log.warn("Could not construct playback file");
+                    return null;
+                }
+            }
+        } else {
+            try {
+                return buildPlaylistFile(fullPath, title, fileIdName);
+            } catch (IOException e) {
+                log.warn("Could not construct playback file");
+                return null;
+            }
         }
     }
 
