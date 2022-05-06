@@ -76,37 +76,46 @@ public class RequestService {
             double start = 0.0;
             double end = 0.0;
             builder.append("#EXTM3U'\n");
-            builder.append("#EXTINF:-1,");
-            builder.append(title);
-            builder.append("\n");
+            addPlaylistTitleSegment(builder, title);
             for (SponsorBlockVideoSegmentResponse segment: responseEntity.getBody()) {
                 end = segment.getSegment().get(0);
-                builder.append("#EXTINF:-1,");
-                builder.append(title);
-                builder.append("\n");
-                builder.append("#EXTVLCOPT:start-time=");
-                builder.append(start);
-                builder.append("\n");
-                builder.append("#EXTVLCOPT:stop-time=");
-                builder.append(end);
-                builder.append("\n");
-                builder.append(id);
-                builder.append("\n");
+                addPlaylistTitleSegment(builder, title);
+                addPlaylistStartSegment(builder, start);
+                addPlaylistEndSegment(builder, end);
+                addPlaylistFilenameSegment(builder, id);
                 start = segment.getSegment().get(1);
             }
-            builder.append("#EXTINF:-1,");
-            builder.append(title);
-            builder.append("\n");
-            builder.append("#EXTVLCOPT:start-time=");
-            builder.append(start);
-            builder.append("\n");
-            builder.append(id);
-            builder.append("\n");
+            addPlaylistTitleSegment(builder, title);
+            addPlaylistStartSegment(builder, start);
+            addPlaylistFilenameSegment(builder, id);
 
             return createFileFromFullPath(fullPath, builder.toString());
         } else {
             return buildPlaylistFile(fullPath, title, id);
         }
+    }
+
+    private void addPlaylistStartSegment(StringBuilder builder, double start) {
+        builder.append("#EXTVLCOPT:start-time=");
+        builder.append(start);
+        builder.append("\n");
+    }
+
+    private void addPlaylistEndSegment(StringBuilder builder, double end) {
+        builder.append("#EXTVLCOPT:stop-time=");
+        builder.append(end);
+        builder.append("\n");
+    }
+
+    private void addPlaylistTitleSegment(StringBuilder builder, String title) {
+        builder.append("#EXTINF:-1,");
+        builder.append(title);
+        builder.append("\n");
+    }
+
+    private void addPlaylistFilenameSegment(StringBuilder builder, String id) {
+        builder.append(id);
+        builder.append("\n");
     }
 
     private String buildPlaylistFile(String fullPath, String title, String id) throws IOException {
