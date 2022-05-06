@@ -3,6 +3,7 @@ package nl.leonvanderkaap.youtube;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.SystemUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -133,7 +134,7 @@ public class RequestService {
         downloadArgumentList.add(wrap(video));
         downloadArgumentList.add("--write-info-json");
         downloadArgumentList.addAll(List.of("-P", wrap(LiveSettings.tempfolder), "-o", wrap(fileIdName)));
-        downloadArgumentList.addAll(List.of("-f", String.format("\"best[height<=%s]\"", LiveSettings.maxResolution)));
+        downloadArgumentList.addAll(List.of("-f", String.format(wrap("best[height<=%s]"), LiveSettings.maxResolution)));
         String[] downloadArguments = downloadArgumentList.toArray(new String[]{});
 
         ProcessBuilder downloadProcessBuilder = new ProcessBuilder(downloadArguments);
@@ -142,7 +143,12 @@ public class RequestService {
             // Don't remove the lines reading the output
             // For some reason, some video downloads(especially bigger ones) break when the output is not read
             BufferedReader in = new BufferedReader(new InputStreamReader(downloadProcess.getInputStream()));
+            BufferedReader errorStream = new BufferedReader(new InputStreamReader(downloadProcess.getInputStream()));
             while ((in.readLine()) != null);
+            String errorString = collectStream(errorStream);
+            if (!errorString.isEmpty()) {
+                log.warn(errorString);
+            }
             Process downloadResult = downloadProcess.onExit().get();
             if (downloadResult.exitValue() != 0) throw new RuntimeException();
         } catch (Exception e) {
@@ -218,6 +224,19 @@ public class RequestService {
     }
 
     private static String wrap(String str) {
-        return "\""+str+"\"";
+        if (SystemUtils.IS_OS_WINDOWS) {
+            return "\""+str+"\"";
+        } else {
+            return str;
+        }
+    }
+
+    private static String collectStream(BufferedReader stream) throws IOException {
+        StringBuilder stringBuilder = new StringBuilder();
+        String errorLine;
+        while ((errorLine = stream.readLine()) != null) {
+            stringBuilder.append(errorLine);
+        }
+        return stringBuilder.toString();
     }
 }
