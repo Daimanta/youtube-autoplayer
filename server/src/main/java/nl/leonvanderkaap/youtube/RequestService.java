@@ -4,15 +4,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.SystemUtils;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.FutureTask;
@@ -30,7 +29,7 @@ public class RequestService {
         this.executor = executor;
     }
 
-    public void playVideo(String video) {
+    public void queueVideo(String video) {
         executor.execute(getPlayVideoFuture(video));
     }
 
@@ -45,24 +44,13 @@ public class RequestService {
             String fullPath = folderPath + fileIdName;
             log.debug(String.format("Downloading '%s'", video));
             boolean downloadSuccess = downloadVideo(video, fileIdName);
-            log.debug(String.format("Queueing '%s'", video));
-            while (!fileIdName.equals(queue.peek()) && !queue.isEmpty()) {
-                try {
-                    Thread.sleep(200);
-                } catch (Exception e) {
-                    queue.remove(fileIdName);
-                    return null;
-                }
-            }
-
             if (!downloadSuccess) {
                 log.warn("Download failed!");
-                queue.remove(fileIdName);
                 return null;
             }
 
             // If we arrive here, the download has completed without error(?). We can now play the file
-            playVideo(video, fullPath, fileIdName);
+            queueVideo(video, fullPath, fileIdName);
             File target = new File(fullPath);
             target.deleteOnExit();
 
@@ -168,28 +156,25 @@ public class RequestService {
         return true;
     }
 
-    private void playVideo(String video, String fullPath, String fileIdName) {
+    private void queueVideo(String video, String fullPath, String fileIdName) {
+        log.debug("Trying to enqueue file");
+        RestTemplate restTemplate = new RestTemplate();
+
         List<String> playArgumentList = new ArrayList<>();
         playArgumentList.add(LiveSettings.vlc);
 
         String playListLocation = buildPlaylist(video, fullPath, fileIdName);
         if (playListLocation == null) return;
-        playArgumentList.add(wrap(playListLocation));
-        playArgumentList.add("--fullscreen");
-        playArgumentList.addAll(List.of("--one-instance", "--playlist-enqueue"));
-        String[] playArguments = playArgumentList.toArray(new String[]{});
-
-        ProcessBuilder playProcessBuilder = new ProcessBuilder(playArguments);
-        log.debug("Adding vlc video to queue");
+        URI enqueueURL;
         try {
-            if (!queue.isEmpty()) {
-                queue.poll();
-            }
-            Process playProcess = playProcessBuilder.start();
-            playProcess.onExit().get();
-        } catch (Exception e) {
-            log.warn("Play failed", e);
+            enqueueURL = new URI("http", null, "localhost", LiveSettings.vlcPort, "/requests/status.xml", "command=in_enqueue&input=file:///" + playListLocation.replace("\\", "/"), null);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
         }
+
+        Object response = get(restTemplate, enqueueURL, Map.of("Authorization", "Basic " + LiveSettings.vlcPasswordBasicAuth()), Object.class);
+        log.debug("Adding vlc video to queue");
+        queue.remove(fileIdName);
     }
 
     private String buildPlaylist(String video, String fullPath, String fileIdName) {
@@ -206,29 +191,37 @@ public class RequestService {
             return null;
         }
         if (LiveSettings.blockSponsors) {
-            log.debug("Building sponsorblock file");
-            RestTemplate restTemplate = new RestTemplate();
-            ResponseEntity<SponsorBlockVideoSegmentResponse[]> responseEntity = null;
-            try {
-                responseEntity = restTemplate.getForEntity("https://sponsor.ajay.app/api/skipSegments?videoID=" + video, SponsorBlockVideoSegmentResponse[].class, Collections.emptyMap());
-            } catch (Exception ignored) {}
-            try {
-                return buildPlaylistFile(responseEntity, fullPath, title, fileIdName);
-            } catch (Exception e) {
-                try {
-                    return buildPlaylistFile(fullPath, title, fileIdName);
-                } catch (IOException ex) {
-                    log.warn("Could not construct playback file");
-                    return null;
-                }
-            }
+            return buildSponsorCheckedPlayListFile(video, fullPath, title, fileIdName);
         } else {
+            return buildRegularPlaylistFile(fullPath, title, fileIdName);
+        }
+    }
+
+    private String buildSponsorCheckedPlayListFile(String video, String fullPath, String title, String fileIdName) {
+        log.debug("Building sponsorblock file");
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<SponsorBlockVideoSegmentResponse[]> responseEntity = null;
+        try {
+            responseEntity = restTemplate.getForEntity("https://sponsor.ajay.app/api/skipSegments?videoID=" + video, SponsorBlockVideoSegmentResponse[].class, Collections.emptyMap());
+        } catch (Exception ignored) {}
+        try {
+            return buildPlaylistFile(responseEntity, fullPath, title, fileIdName);
+        } catch (Exception e) {
             try {
                 return buildPlaylistFile(fullPath, title, fileIdName);
-            } catch (IOException e) {
+            } catch (IOException ex) {
                 log.warn("Could not construct playback file");
                 return null;
             }
+        }
+    }
+
+    private String buildRegularPlaylistFile(String fullPath, String title, String fileIdName) {
+        try {
+            return buildPlaylistFile(fullPath, title, fileIdName);
+        } catch (IOException e) {
+            log.warn("Could not construct playback file");
+            return null;
         }
     }
 
@@ -247,5 +240,14 @@ public class RequestService {
             stringBuilder.append(errorLine);
         }
         return stringBuilder.toString();
+    }
+
+    private static <T> ResponseEntity<T> get(RestTemplate restTemplate, URI uri, Map<String, String> headers, Class<T> clazz) {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        for (String header: headers.keySet()) {
+            httpHeaders.set(header, headers.get(header));
+        }
+        HttpEntity<Void> requestEntity = new HttpEntity<>(httpHeaders);
+        return restTemplate.exchange(uri, HttpMethod.GET, requestEntity, clazz);
     }
 }

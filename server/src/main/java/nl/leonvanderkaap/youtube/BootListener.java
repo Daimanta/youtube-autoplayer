@@ -24,8 +24,11 @@ public class BootListener {
         if (applicationSettings.getYtdlp() != null) LiveSettings.ytdlp = applicationSettings.getYtdlp();
         if (applicationSettings.getTempfolder() != null) LiveSettings.tempfolder = applicationSettings.getTempfolder();
         if (applicationSettings.getVlc() != null) LiveSettings.vlc = applicationSettings.getVlc();
+        if (applicationSettings.getVlcPassword() != null) LiveSettings.vlcPassword = applicationSettings.getVlcPassword();
+
         LiveSettings.blockSponsors = applicationSettings.isBlockSponsors();
         LiveSettings.maxResolution = applicationSettings.getMaxResolution();
+        LiveSettings.vlcPort = applicationSettings.getVlcport();
 
         if (SystemUtils.IS_OS_WINDOWS) {
             if (LiveSettings.ytdlp == null) LiveSettings.ytdlp = "yt-dlp.exe";
@@ -40,6 +43,11 @@ public class BootListener {
 
         if (LiveSettings.getAllValues().stream().anyMatch(Objects::isNull)) {
             log.error("Some essential configuration values are null, this shouldn't happen. Exiting.");
+            System.exit(1);
+        }
+
+        if (LiveSettings.vlcPort < 1) {
+            log.error("Vlc port should be a positive number. Exiting.");
             System.exit(1);
         }
 

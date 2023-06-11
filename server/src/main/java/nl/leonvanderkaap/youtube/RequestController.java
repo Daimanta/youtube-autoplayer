@@ -19,6 +19,6 @@ public class RequestController {
     @CrossOrigin
     @GetMapping(path = "/play")
     public void downloadAndPlay(@RequestParam(required = true) String video) {
-        requestService.playVideo(video);
+        requestService.queueVideo(video);
     }
 }
