@@ -33,6 +33,56 @@ public class RequestService {
         executor.execute(getPlayVideoFuture(video));
     }
 
+    public void togglePlay() {
+        executor.execute(new FutureTask<>(() -> {
+            ResponseEntity<String> response = doRequest("localhost", "command=pl_pause");
+            return null;
+        }));
+    }
+
+    public void play() {
+        executor.execute(new FutureTask<>(() -> {
+            ResponseEntity<String> response = doRequest("localhost", "command=pl_pause");
+            return null;
+        }));
+    }
+
+    public void pause() {
+        executor.execute(new FutureTask<>(() -> {
+            ResponseEntity<String> response = doRequest("localhost", "command=pl_pause");
+            return null;
+        }));
+    }
+
+    public void next() {
+        executor.execute(new FutureTask<>(() -> {
+            ResponseEntity<String> response = doRequest("localhost", "command=pl_next");
+            return null;
+        }));
+    }
+
+    public void previous() {
+        executor.execute(new FutureTask<>(() -> {
+            ResponseEntity<String> response = doRequest("localhost", "command=pl_previous");
+            return null;
+        }));
+    }
+
+    public void volumeUp() {
+
+    }
+
+    public void volumeDown() {
+
+    }
+
+    public void fullScreen() {
+        executor.execute(new FutureTask<>(() -> {
+            ResponseEntity<String> response = doRequest("localhost", "command=fullscreen");
+            return null;
+        }));
+    }
+
     private FutureTask<Void> getPlayVideoFuture(String video) {
         return new FutureTask<>(() -> {
             String fileIdName = UUID.randomUUID().toString();
@@ -158,21 +208,10 @@ public class RequestService {
 
     private void queueVideo(String video, String fullPath, String fileIdName) {
         log.debug("Trying to enqueue file");
-        RestTemplate restTemplate = new RestTemplate();
-
-        List<String> playArgumentList = new ArrayList<>();
-        playArgumentList.add(LiveSettings.vlc);
-
         String playListLocation = buildPlaylist(video, fullPath, fileIdName);
         if (playListLocation == null) return;
-        URI enqueueURL;
-        try {
-            enqueueURL = new URI("http", null, "localhost", LiveSettings.vlcPort, "/requests/status.xml", "command=in_enqueue&input=file:///" + playListLocation.replace("\\", "/"), null);
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
+        ResponseEntity<String> response = doRequest("localhost", "command=in_enqueue&input=file:///" + playListLocation.replace("\\", "/"));
 
-        Object response = get(restTemplate, enqueueURL, Map.of("Authorization", "Basic " + LiveSettings.vlcPasswordBasicAuth()), Object.class);
         log.debug("Adding vlc video to queue");
         queue.remove(fileIdName);
     }
@@ -249,5 +288,17 @@ public class RequestService {
         }
         HttpEntity<Void> requestEntity = new HttpEntity<>(httpHeaders);
         return restTemplate.exchange(uri, HttpMethod.GET, requestEntity, clazz);
+    }
+
+    private static ResponseEntity<String> doRequest(String host, String command) {
+        RestTemplate restTemplate = new RestTemplate();
+        URI enqueueURL;
+        try {
+            enqueueURL = new URI("http", null, host, LiveSettings.vlcPort, "/requests/status.xml", command, null);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+
+        return get(restTemplate, enqueueURL, Map.of("Authorization", "Basic " + LiveSettings.vlcPasswordBasicAuth()), String.class);
     }
 }

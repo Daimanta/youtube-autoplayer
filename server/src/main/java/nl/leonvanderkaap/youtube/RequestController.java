@@ -17,8 +17,32 @@ public class RequestController {
     }
 
     @CrossOrigin
-    @GetMapping(path = "/play")
-    public void downloadAndPlay(@RequestParam(required = true) String video) {
+    @GetMapping(path = "/queue")
+    public void downloadAndQueue(@RequestParam(required = true) String video) {
         requestService.queueVideo(video);
+    }
+
+    @CrossOrigin
+    @GetMapping("/play")
+    public void togglePlay() {
+        requestService.togglePlay();
+    }
+
+    @CrossOrigin
+    @GetMapping("/fullscreen")
+    public void toggleFullscreen() {
+        requestService.fullScreen();
+    }
+
+    @CrossOrigin
+    @GetMapping("/next")
+    public void next() {
+        requestService.next();
+    }
+
+    @CrossOrigin
+    @GetMapping("/previous")
+    public void previous() {
+        requestService.previous();
     }
 }
