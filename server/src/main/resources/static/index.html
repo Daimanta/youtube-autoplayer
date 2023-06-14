@@ -1,4 +1,5 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <script>
 function playPause() {
     fetch('/api/play')
@@ -31,13 +32,21 @@ function addToQueue() {
     queueInputElement.value = "";
 }
 </script>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="utf8"/>
+    <link rel="stylesheet" href="styles.css">
+    <title>Playback remote control</title>
+</head>
+<h1>Playback remote control</h1>
 
-<button type="button" onclick="playPause()">Play/Pauze</button><br>
-<button type="button" onclick="fullscreen()">Fullscreen</button><br>
-<button type="button" onclick="volumedown()">Volume down</button>
-<button type="button" onclick="volumeup()">Volume up</button><br>
-<button type="button" onclick="previous()">Previous</button>
-<button type="button" onclick="next()">Next</button><br>
+<button type="button" class="iconbutton" onclick="playPause()">⏯</button>
+<button type="button" class="iconbutton" onclick="stop()">⏹</button>
+<button type="button" class="iconbutton" onclick="previous()">⏮</button>
+<button type="button" class="iconbutton"onclick="next()">⏭</button>
+<button type="button" class="invertediconbutton" onclick="volumedown()">🕩</button>
+<button type="button" class="invertediconbutton" onclick="volumeup()">🕪</button>
+<br>
+<button type="button" class="textbutton" onclick="fullscreen()">Fullscreen</button><br>
 <input type="text" id="queue_input_id">
-<button type="button" onclick="addToQueue()">Add to queue</button>
+<button type="button" class="textbutton" onclick="addToQueue()">Add to queue</button>
 </html>

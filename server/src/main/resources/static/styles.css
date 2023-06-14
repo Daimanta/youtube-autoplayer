@@ -1,0 +1,26 @@
+.iconbutton {
+    height: 35px;
+    width: 35px;
+    font-size: 25px;
+    text-align: center;
+    display: inline-flex;
+    align-items: flex-end;
+    font-family: "Segoe UI", serif;
+}
+
+.invertediconbutton {
+    height: 35px;
+    width: 35px;
+    font-size: 25px;
+    text-align: center;
+    background-position: center;
+    transform: scale(-1);
+    display: inline-flex;
+    align-items: flex-end;
+    font-family: "Segoe UI", serif;
+}
+
+.textbutton {
+    font-size: 15px;
+    font-weight: bold;
+}
