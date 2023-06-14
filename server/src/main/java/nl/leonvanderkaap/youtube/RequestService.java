@@ -1,7 +1,9 @@
 package nl.leonvanderkaap.youtube;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.http.*;
@@ -69,16 +71,47 @@ public class RequestService {
     }
 
     public void volumeUp() {
-
+        executor.execute(new FutureTask<>(() -> {
+            LinkedHashMap<String, ?> status = getStatus();
+            Object volumeObject = status.get("volume");
+            if (volumeObject instanceof String volumeString) {
+                try {
+                    int volume = Integer.parseInt(volumeString);
+                    int newVolume = volume + 12;
+                    if (newVolume > 512) newVolume = 512;
+                    doRequest("localhost", "command=volume&val="+newVolume);
+                } catch (Exception e) {}
+            }
+            return null;
+        }));
     }
 
     public void volumeDown() {
-
+        executor.execute(new FutureTask<>(() -> {
+            LinkedHashMap<String, ?> status = getStatus();
+            Object volumeObject = status.get("volume");
+            if (volumeObject instanceof String volumeString) {
+                try {
+                    int volume = Integer.parseInt(volumeString);
+                    int newVolume = volume - 12;
+                    if (newVolume < 0) newVolume = 0;
+                    doRequest("localhost", "command=volume&val="+newVolume);
+                } catch (Exception e) {}
+            }
+            return null;
+        }));
     }
 
     public void fullScreen() {
         executor.execute(new FutureTask<>(() -> {
             ResponseEntity<String> response = doRequest("localhost", "command=fullscreen");
+            return null;
+        }));
+    }
+
+    public void emptyPlaylist() {
+        executor.execute(new FutureTask<>(() -> {
+            ResponseEntity<String> response = doRequest("localhost", "command=pl_empty");
             return null;
         }));
     }
@@ -286,6 +319,7 @@ public class RequestService {
         for (String header: headers.keySet()) {
             httpHeaders.set(header, headers.get(header));
         }
+        httpHeaders.setContentType(MediaType.TEXT_XML);
         HttpEntity<Void> requestEntity = new HttpEntity<>(httpHeaders);
         return restTemplate.exchange(uri, HttpMethod.GET, requestEntity, clazz);
     }
@@ -300,5 +334,15 @@ public class RequestService {
         }
 
         return get(restTemplate, enqueueURL, Map.of("Authorization", "Basic " + LiveSettings.vlcPasswordBasicAuth()), String.class);
+    }
+
+    private static LinkedHashMap<String, ?> getStatus() {
+        ResponseEntity<String> responseStirng = doRequest("localhost", null);
+        XmlMapper xmlMapper = new XmlMapper();
+        try {
+            return xmlMapper.readValue(responseStirng.getBody(), LinkedHashMap.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -45,4 +45,22 @@ public class RequestController {
     public void previous() {
         requestService.previous();
     }
+
+    @CrossOrigin
+    @GetMapping("/volumeup")
+    public void volumeUp() {
+        requestService.volumeUp();
+    }
+
+    @CrossOrigin
+    @GetMapping("/volumedown")
+    public void volumeDown() {
+        requestService.volumeDown();
+    }
+
+    @CrossOrigin
+    @GetMapping("/emptyplaylist")
+    public void emptyPlaylist() {
+        requestService.emptyPlaylist();
+    }
 }
