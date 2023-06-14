@@ -1,0 +1,43 @@
+<html>
+<script>
+function playPause() {
+    fetch('/api/play')
+}
+
+function fullscreen() {
+    fetch('/api/fullscreen')
+}
+
+function volumeup() {
+    fetch('/api/volumeup')
+}
+
+function volumedown() {
+    fetch('api/volumedown')
+}
+
+function next() {
+    fetch('api/next')
+}
+
+function previous() {
+    fetch('api/previous')
+}
+
+function addToQueue() {
+    const queueInputElement = document.getElementById("queue_input_id");
+    const video = queueInputElement.value || null;
+    fetch('api/queue?video=' + video);
+    queueInputElement.value = "";
+}
+</script>
+
+<button type="button" onclick="playPause()">Play/Pauze</button><br>
+<button type="button" onclick="fullscreen()">Fullscreen</button><br>
+<button type="button" onclick="volumedown()">Volume down</button>
+<button type="button" onclick="volumeup()">Volume up</button><br>
+<button type="button" onclick="previous()">Previous</button>
+<button type="button" onclick="next()">Next</button><br>
+<input type="text" id="queue_input_id">
+<button type="button" onclick="addToQueue()">Add to queue</button>
+</html>

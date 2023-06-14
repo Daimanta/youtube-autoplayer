@@ -56,6 +56,13 @@ public class RequestService {
         }));
     }
 
+    public void stop() {
+        executor.execute(new FutureTask<>(() -> {
+            ResponseEntity<String> response = doRequest("localhost", "command=pl_stop");
+            return null;
+        }));
+    }
+
     public void next() {
         executor.execute(new FutureTask<>(() -> {
             ResponseEntity<String> response = doRequest("localhost", "command=pl_next");
@@ -258,15 +265,16 @@ public class RequestService {
             JsonNode titleNode = node.get("title");
             title = titleNode.asText();
             metadataFile.delete();
+            if (LiveSettings.blockSponsors) {
+                return buildSponsorCheckedPlayListFile(node.get("id").asText(), fullPath, title, fileIdName);
+            } else {
+                return buildRegularPlaylistFile(fullPath, title, fileIdName);
+            }
         } catch (IOException e) {
             log.warn("Could not read video metadata file");
             return null;
         }
-        if (LiveSettings.blockSponsors) {
-            return buildSponsorCheckedPlayListFile(video, fullPath, title, fileIdName);
-        } else {
-            return buildRegularPlaylistFile(fullPath, title, fileIdName);
-        }
+
     }
 
     private String buildSponsorCheckedPlayListFile(String video, String fullPath, String title, String fileIdName) {

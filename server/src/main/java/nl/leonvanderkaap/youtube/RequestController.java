@@ -1,13 +1,11 @@
 package nl.leonvanderkaap.youtube;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Slf4j
+@RequestMapping("/api")
 public class RequestController {
 
     private RequestService requestService;
@@ -26,6 +24,12 @@ public class RequestController {
     @GetMapping("/play")
     public void togglePlay() {
         requestService.togglePlay();
+    }
+
+    @CrossOrigin
+    @GetMapping("/stop")
+    public void stop() {
+        requestService.stop();
     }
 
     @CrossOrigin
