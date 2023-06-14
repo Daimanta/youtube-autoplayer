@@ -15,7 +15,7 @@ public class ApplicationSettings {
     private String tempfolder;
     private String vlc;
     private int vlcport;
-    private String vlcPassword;
-    private boolean blockSponsors = true;
-    private String maxResolution = "1080p";
+    private String vlcpassword;
+    private boolean blocksponsors = true;
+    private String maxresolution = "1080p";
 }

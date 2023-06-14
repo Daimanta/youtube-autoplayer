@@ -24,10 +24,10 @@ public class BootListener {
         if (applicationSettings.getYtdlp() != null) LiveSettings.ytdlp = applicationSettings.getYtdlp();
         if (applicationSettings.getTempfolder() != null) LiveSettings.tempfolder = applicationSettings.getTempfolder();
         if (applicationSettings.getVlc() != null) LiveSettings.vlc = applicationSettings.getVlc();
-        if (applicationSettings.getVlcPassword() != null) LiveSettings.vlcPassword = applicationSettings.getVlcPassword();
+        if (applicationSettings.getVlcpassword() != null) LiveSettings.vlcPassword = applicationSettings.getVlcpassword();
 
-        LiveSettings.blockSponsors = applicationSettings.isBlockSponsors();
-        LiveSettings.maxResolution = applicationSettings.getMaxResolution();
+        LiveSettings.blockSponsors = applicationSettings.isBlocksponsors();
+        LiveSettings.maxResolution = applicationSettings.getMaxresolution();
         LiveSettings.vlcPort = applicationSettings.getVlcport();
 
         if (SystemUtils.IS_OS_WINDOWS) {
