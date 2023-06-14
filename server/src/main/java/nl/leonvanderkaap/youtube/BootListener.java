@@ -7,6 +7,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 
 @Component
@@ -40,15 +41,19 @@ public class BootListener {
             if (LiveSettings.tempfolder == null) LiveSettings.tempfolder = "/tmp";
             if (LiveSettings.vlc == null) LiveSettings.vlc = "vlc";
         }
+        List<Object> liveSettings = LiveSettings.getAllValues();
 
-        if (LiveSettings.getAllValues().stream().anyMatch(Objects::isNull)) {
-            log.error("Some essential configuration values are null, this shouldn't happen. Exiting.");
-            System.exit(1);
+        for (int i=0;i<liveSettings.size();i++) {
+            if (liveSettings.get(i) == null) {
+                log.error("Parameter at index " + i +" is null but must not be. Exiting.");
+                throw new RuntimeException();
+            }
         }
+
 
         if (LiveSettings.vlcPort < 1) {
             log.error("Vlc port should be a positive number. Exiting.");
-            System.exit(1);
+            throw new RuntimeException();
         }
 
         ProcessBuilder processBuilder = new ProcessBuilder(LiveSettings.ytdlp, "--version");
@@ -56,7 +61,7 @@ public class BootListener {
             processBuilder.start();
         } catch (IOException e) {
             log.error(String.format("Could not find ytdlp command at '%s'. Exiting.", LiveSettings.ytdlp));
-            System.exit(1);
+            throw new RuntimeException();
         }
     }
 
