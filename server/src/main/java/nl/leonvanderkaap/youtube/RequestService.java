@@ -123,6 +123,40 @@ public class RequestService {
         }));
     }
 
+    public List<PlaylistItem> getPlaylist() {
+        List<PlaylistItem> result = new ArrayList<>();
+
+        ResponseEntity<String> playlistEntity = getPlaylist("localhost");
+        String playlistXmlString = playlistEntity.getBody();
+        XmlMapper xmlMapper = new XmlMapper();
+        try {
+            LinkedHashMap<String, ?> map = xmlMapper.readValue(playlistXmlString, LinkedHashMap.class);
+            Object playListOuterWrapperObj = map.get("item");
+            if (playListOuterWrapperObj instanceof LinkedHashMap<?,?> playlistOuterWrapper) {
+                Object playListInnerWrapperObj = playlistOuterWrapper.get("item");
+                if (playListInnerWrapperObj instanceof ArrayList<?> playlistInnerWrapper) {
+                    Object listDetailsObj = playlistInnerWrapper.get(0);
+                    if (listDetailsObj instanceof LinkedHashMap<?,?> listDetails) {
+                        Object listItemsObj = listDetails.get("item");
+                        if (listItemsObj instanceof ArrayList<?> listItems) {
+                            for (Object itemObj: listItems) {
+                                if (itemObj instanceof LinkedHashMap<?,?> item) {
+                                    String itemId = (String) item.get("id");
+                                    String title = (String) item.get("name");
+                                    String duration = (String) item.get("duration");
+                                    result.add(new PlaylistItem(itemId, title, Integer.parseInt(duration)));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+
     private FutureTask<Void> getPlayVideoFuture(String video) {
         return new FutureTask<>(() -> {
             String fileIdName = UUID.randomUUID().toString();
@@ -344,6 +378,18 @@ public class RequestService {
         return get(restTemplate, enqueueURL, Map.of("Authorization", "Basic " + LiveSettings.vlcPasswordBasicAuth()), String.class);
     }
 
+    private static ResponseEntity<String> getPlaylist(String host) {
+        RestTemplate restTemplate = new RestTemplate();
+        URI enqueueURL;
+        try {
+            enqueueURL = new URI("http", null, host, LiveSettings.vlcPort, "/requests/playlist_jstree.xml", null, null);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+
+        return get(restTemplate, enqueueURL, Map.of("Authorization", "Basic " + LiveSettings.vlcPasswordBasicAuth()), String.class);
+    }
+
     private static LinkedHashMap<String, ?> getStatus() {
         ResponseEntity<String> responseStirng = doRequest("localhost", null);
         XmlMapper xmlMapper = new XmlMapper();
@@ -353,4 +399,6 @@ public class RequestService {
             throw new RuntimeException(e);
         }
     }
+
+
 }

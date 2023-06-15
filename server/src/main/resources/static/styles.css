@@ -24,3 +24,7 @@
     font-size: 15px;
     font-weight: bold;
 }
+
+table, th, td {
+    border: 1px solid black;
+}

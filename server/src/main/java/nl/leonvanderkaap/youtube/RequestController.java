@@ -1,7 +1,10 @@
 package nl.leonvanderkaap.youtube;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @Slf4j
@@ -66,5 +69,11 @@ public class RequestController {
     @GetMapping("/emptyplaylist")
     public void emptyPlaylist() {
         requestService.emptyPlaylist();
+    }
+
+    @CrossOrigin
+    @GetMapping(value = "/getplaylist", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<PlaylistItem> getPlaylist() {
+        return requestService.getPlaylist();
     }
 }

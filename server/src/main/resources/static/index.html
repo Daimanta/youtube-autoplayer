@@ -2,27 +2,27 @@
 <html lang="en">
 <script>
 function playPause() {
-    fetch('/api/play')
+    fetch('/api/play');
 }
 
 function fullscreen() {
-    fetch('/api/fullscreen')
+    fetch('/api/fullscreen');
 }
 
 function volumeup() {
-    fetch('/api/volumeup')
+    fetch('/api/volumeup');
 }
 
 function volumedown() {
-    fetch('api/volumedown')
+    fetch('api/volumedown');
 }
 
 function next() {
-    fetch('api/next')
+    fetch('api/next');
 }
 
 function previous() {
-    fetch('api/previous')
+    fetch('api/previous');
 }
 
 function addToQueue() {
@@ -30,6 +30,53 @@ function addToQueue() {
     const video = queueInputElement.value || null;
     fetch('api/queue?video=' + video);
     queueInputElement.value = "";
+}
+
+function getPlaylist() {
+    fetch('api/getplaylist').then(async (response) => {
+        const data = await response.json();
+        const table_body = document.getElementById("playlist_table_body_id");
+        table_body.innerHTML = "";
+        if (data.length === 0) {
+            const row = document.createElement("tr");
+            let i = 0;
+            while (i < 2) {
+                const col = document.createElement("td");
+                col.textContent = "-";
+                row.appendChild(col);
+                i++;
+            }
+            table_body.appendChild(row);
+        } else {
+            for (let entry of data) {
+                const row = document.createElement("tr");
+                const titleCol = document.createElement("td");
+                titleCol.textContent = entry.title;
+                const durationCol = document.createElement("td");
+                durationCol.textContent = lengthString(entry.duration);
+                row.appendChild(titleCol);
+                row.appendChild(durationCol);
+                table_body.appendChild(row);
+            }
+        }
+
+        console.log(data);
+    });
+}
+
+function lengthString(duration) {
+    if (duration >= 3600) {
+        const hours = Math.floor(duration / 3600);
+        const minutes = Math.floor((duration % 3600) / 60);
+        const seconds = duration % 60;
+        return "" + hours + ":" + minutes + ":" + seconds;
+    } else if (duration >= 60) {
+        const minutes = Math.floor(duration / 60);
+        const seconds = duration % 60
+        return "" + minutes + ":" + seconds;
+    } else {
+        return "0:" + duration;
+    }
 }
 </script>
 <head>
@@ -49,4 +96,20 @@ function addToQueue() {
 <button type="button" class="textbutton" onclick="fullscreen()">Fullscreen</button><br>
 <input type="text" id="queue_input_id">
 <button type="button" class="textbutton" onclick="addToQueue()">Add to queue</button>
+<br>
+<button type="button" class="textbutton" onclick="getPlaylist()">Refresh playlist</button>
+<table id="playlist_table_id">
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Duration</th>
+    </tr>
+    </thead>
+    <tbody id="playlist_table_body_id">
+    <tr>
+        <th>-</th>
+        <th>-</th>
+    </tr>
+    </tbody>
+</table>
 </html>
