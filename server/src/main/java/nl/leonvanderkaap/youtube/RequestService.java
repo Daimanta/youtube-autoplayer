@@ -123,8 +123,9 @@ public class RequestService {
         }));
     }
 
-    public List<PlaylistItem> getPlaylist() {
-        List<PlaylistItem> result = new ArrayList<>();
+    public PlaylistInfo getPlaylist() {
+
+        List<PlaylistItem> items = new ArrayList<>();
 
         ResponseEntity<String> playlistEntity = getPlaylist("localhost");
         String playlistXmlString = playlistEntity.getBody();
@@ -144,7 +145,7 @@ public class RequestService {
                                     String itemId = (String) item.get("id");
                                     String title = (String) item.get("name");
                                     String duration = (String) item.get("duration");
-                                    result.add(new PlaylistItem(itemId, title, Integer.parseInt(duration)));
+                                    items.add(new PlaylistItem(itemId, title, Integer.parseInt(duration)));
                                 }
                             }
                         }
@@ -154,7 +155,12 @@ public class RequestService {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-        return result;
+
+        LinkedHashMap<String, ?> status = getStatus();
+        String currentIdString = (String) status.get("currentplid");
+        String state = (String) status.get("state");
+
+        return new PlaylistInfo(Integer.parseInt(currentIdString), state, items);
     }
 
     private FutureTask<Void> getPlayVideoFuture(String video) {

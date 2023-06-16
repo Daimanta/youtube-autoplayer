@@ -37,10 +37,10 @@ function getPlaylist() {
         const data = await response.json();
         const table_body = document.getElementById("playlist_table_body_id");
         table_body.innerHTML = "";
-        if (data.length === 0) {
+        if (data.items.length === 0) {
             const row = document.createElement("tr");
             let i = 0;
-            while (i < 2) {
+            while (i < 3) {
                 const col = document.createElement("td");
                 col.textContent = "-";
                 row.appendChild(col);
@@ -48,34 +48,37 @@ function getPlaylist() {
             }
             table_body.appendChild(row);
         } else {
-            for (let entry of data) {
+            for (let entry of data.items) {
                 const row = document.createElement("tr");
+                const playActiveCol = document.createElement("td");
+                if (entry.id === "plid_"+data.activeIndex) {
+                    playActiveCol.textContent = "→";
+                }
                 const titleCol = document.createElement("td");
                 titleCol.textContent = entry.title;
                 const durationCol = document.createElement("td");
                 durationCol.textContent = lengthString(entry.duration);
+                row.appendChild(playActiveCol);
                 row.appendChild(titleCol);
                 row.appendChild(durationCol);
                 table_body.appendChild(row);
             }
         }
-
-        console.log(data);
     });
 }
 
 function lengthString(duration) {
     if (duration >= 3600) {
         const hours = Math.floor(duration / 3600);
-        const minutes = Math.floor((duration % 3600) / 60);
-        const seconds = duration % 60;
+        const minutes = (""+Math.floor((duration % 3600) / 60)).padStart(2, '0');
+        const seconds = (""+(duration % 60)).padStart(2, '0');
         return "" + hours + ":" + minutes + ":" + seconds;
     } else if (duration >= 60) {
-        const minutes = Math.floor(duration / 60);
-        const seconds = duration % 60
+        const minutes = (""+(Math.floor(duration / 60))).padStart(2, '0');
+        const seconds = (""+(duration % 60)).padStart(2, '0');
         return "" + minutes + ":" + seconds;
     } else {
-        return "0:" + duration;
+        return "00:" + (""+duration).padStart(2, '0');
     }
 }
 </script>
@@ -101,12 +104,14 @@ function lengthString(duration) {
 <table id="playlist_table_id">
     <thead>
     <tr>
+        <th>-</th>
         <th>Name</th>
         <th>Duration</th>
     </tr>
     </thead>
     <tbody id="playlist_table_body_id">
     <tr>
+        <th>-</th>
         <th>-</th>
         <th>-</th>
     </tr>
