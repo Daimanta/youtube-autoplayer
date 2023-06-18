@@ -23,16 +23,18 @@ import java.util.concurrent.FutureTask;
 public class RequestService {
 
     private Executor executor;
+    private YoutubeDownloadService youtubeDownloadService;
 
     // Enforces the order of added videos
     private final ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<>();
 
-    public RequestService(Executor executor) {
+    public RequestService(Executor executor, YoutubeDownloadService youtubeDownloadService) {
         this.executor = executor;
+        this.youtubeDownloadService = youtubeDownloadService;
     }
 
     public void queueVideo(String video) {
-        executor.execute(getPlayVideoFuture(video));
+        executor.execute(getVideoQueueFuture(video));
     }
 
     public void togglePlay() {
@@ -163,25 +165,17 @@ public class RequestService {
         return new PlaylistInfo(Integer.parseInt(currentIdString), state, items);
     }
 
-    private FutureTask<Void> getPlayVideoFuture(String video) {
+    private FutureTask<Void> getVideoQueueFuture(String video) {
         return new FutureTask<>(() -> {
-            String fileIdName = UUID.randomUUID().toString();
-            queue.offer(fileIdName);
-            String folderPath = LiveSettings.tempfolder;
-            if (!folderPath.endsWith(File.separator)) {
-                folderPath += File.separator;
-            }
-            String fullPath = folderPath + fileIdName;
-            log.debug(String.format("Downloading '%s'", video));
-            boolean downloadSuccess = downloadVideo(video, fileIdName);
-            if (!downloadSuccess) {
+            FileInformation fileInformation = youtubeDownloadService.download(video);
+            if (fileInformation == null) {
                 log.warn("Download failed!");
                 return null;
             }
 
             // If we arrive here, the download has completed without error(?). We can now play the file
-            queueVideo(video, fullPath, fileIdName);
-            File target = new File(fullPath);
+            queueVideo(fileInformation.path(), fileInformation.fileId());
+            File target = new File(fileInformation.path());
             target.deleteOnExit();
 
             return null;
@@ -255,48 +249,16 @@ public class RequestService {
         return playlistPath;
     }
 
-    private boolean downloadVideo(String video, String fileIdName) {
-        List<String> downloadArgumentList = new ArrayList<>();
-        downloadArgumentList.add(LiveSettings.ytdlp);
-        downloadArgumentList.add(wrap(video));
-        downloadArgumentList.add("--write-info-json");
-        downloadArgumentList.addAll(List.of("-P", wrap(LiveSettings.tempfolder), "-o", wrap(fileIdName)));
-        downloadArgumentList.addAll(List.of("-f", String.format(wrap("best[height<=%s]"), LiveSettings.maxResolution)));
-        String[] downloadArguments = downloadArgumentList.toArray(new String[]{});
-
-        ProcessBuilder downloadProcessBuilder = new ProcessBuilder(downloadArguments);
-        try {
-            Process downloadProcess = downloadProcessBuilder.start();
-            // Don't remove the lines reading the output
-            // For some reason, some video downloads(especially bigger ones) break when the output is not read
-            BufferedReader in = new BufferedReader(new InputStreamReader(downloadProcess.getInputStream()));
-            BufferedReader errorStream = new BufferedReader(new InputStreamReader(downloadProcess.getInputStream()));
-            while ((in.readLine()) != null);
-            String errorString = collectStream(errorStream);
-            if (!errorString.isEmpty()) {
-                log.warn(errorString);
-            }
-            Process downloadResult = downloadProcess.onExit().get();
-            if (downloadResult.exitValue() != 0) throw new RuntimeException();
-        } catch (Exception e) {
-            log.warn("Download failed: ", e);
-            queue.remove(fileIdName);
-            return false;
-        }
-        return true;
-    }
-
-    private void queueVideo(String video, String fullPath, String fileIdName) {
+    private void queueVideo(String fullPath, String fileIdName) {
         log.debug("Trying to enqueue file");
-        String playListLocation = buildPlaylist(video, fullPath, fileIdName);
+        String playListLocation = buildPlaylist(fullPath, fileIdName);
         if (playListLocation == null) return;
         ResponseEntity<String> response = doRequest("localhost", "command=in_enqueue&input=file:///" + playListLocation.replace("\\", "/"));
 
         log.debug("Adding vlc video to queue");
-        queue.remove(fileIdName);
     }
 
-    private String buildPlaylist(String video, String fullPath, String fileIdName) {
+    private String buildPlaylist(String fullPath, String fileIdName) {
         ObjectMapper objectMapper = new ObjectMapper();
         String title;
         try {
@@ -304,7 +266,6 @@ public class RequestService {
             JsonNode node = objectMapper.readTree(metadataFile);
             JsonNode titleNode = node.get("title");
             title = titleNode.asText();
-            metadataFile.delete();
             if (LiveSettings.blockSponsors) {
                 return buildSponsorCheckedPlayListFile(node.get("id").asText(), fullPath, title, fileIdName);
             } else {
@@ -343,23 +304,6 @@ public class RequestService {
             log.warn("Could not construct playback file");
             return null;
         }
-    }
-
-    private static String wrap(String str) {
-        if (SystemUtils.IS_OS_WINDOWS) {
-            return "\""+str+"\"";
-        } else {
-            return str;
-        }
-    }
-
-    private static String collectStream(BufferedReader stream) throws IOException {
-        StringBuilder stringBuilder = new StringBuilder();
-        String errorLine;
-        while ((errorLine = stream.readLine()) != null) {
-            stringBuilder.append(errorLine);
-        }
-        return stringBuilder.toString();
     }
 
     private static <T> ResponseEntity<T> get(RestTemplate restTemplate, URI uri, Map<String, String> headers, Class<T> clazz) {

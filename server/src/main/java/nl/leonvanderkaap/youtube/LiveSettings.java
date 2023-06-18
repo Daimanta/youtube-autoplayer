@@ -1,12 +1,13 @@
 package nl.leonvanderkaap.youtube;
 
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
 public class LiveSettings {
+
+    public static final String DOWNLOAD_POSTFIX = "ytdownloads";
 
     public static String ytdlp;
     public static String tempfolder;

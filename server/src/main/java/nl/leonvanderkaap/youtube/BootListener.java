@@ -6,7 +6,10 @@ import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 
@@ -63,6 +66,25 @@ public class BootListener {
             log.error(String.format("Could not find ytdlp command at '%s'. Exiting.", LiveSettings.ytdlp));
             throw new RuntimeException();
         }
+
+        File downloadFolder = new File(getDownloadTempFolder());
+        if (!downloadFolder.exists()) {
+            try {
+                Files.createDirectory(Paths.get(getDownloadTempFolder()));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+    }
+
+    private static String getDownloadTempFolder() {
+        String result = LiveSettings.tempfolder;
+        if (!result.endsWith(File.separator)) {
+            result += File.separator;
+        }
+        result += LiveSettings.DOWNLOAD_POSTFIX;
+        return result;
     }
 
 }
