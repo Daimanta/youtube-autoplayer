@@ -5,6 +5,10 @@ function playPause() {
     fetch('/api/play');
 }
 
+function stop() {
+    fetch('/api/stop');
+}
+
 function fullscreen() {
     fetch('/api/fullscreen');
 }
@@ -25,6 +29,10 @@ function previous() {
     fetch('api/previous');
 }
 
+function emptyPlaylist() {
+    fetch('api/emptyplaylist');
+}
+
 function addToQueue() {
     const queueInputElement = document.getElementById("queue_input_id");
     const video = queueInputElement.value || null;
@@ -35,6 +43,7 @@ function addToQueue() {
 function getPlaylist() {
     fetch('api/getplaylist').then(async (response) => {
         const data = await response.json();
+        console.log(data);
         const table_body = document.getElementById("playlist_table_body_id");
         table_body.innerHTML = "";
         if (data.items.length === 0) {
@@ -92,11 +101,13 @@ function lengthString(duration) {
 <button type="button" class="iconbutton" onclick="playPause()">⏯</button>
 <button type="button" class="iconbutton" onclick="stop()">⏹</button>
 <button type="button" class="iconbutton" onclick="previous()">⏮</button>
-<button type="button" class="iconbutton"onclick="next()">⏭</button>
+<button type="button" class="iconbutton" onclick="next()">⏭</button>
 <button type="button" class="invertediconbutton" onclick="volumedown()">🕩</button>
 <button type="button" class="invertediconbutton" onclick="volumeup()">🕪</button>
 <br>
-<button type="button" class="textbutton" onclick="fullscreen()">Fullscreen</button><br>
+<button type="button" class="textbutton" onclick="fullscreen()">Fullscreen</button>
+<button type="button" class="textbutton" onclick="emptyPlaylist()">Empty playlist</button>
+<br>
 <input type="text" id="queue_input_id">
 <button type="button" class="textbutton" onclick="addToQueue()">Add to queue</button>
 <br>

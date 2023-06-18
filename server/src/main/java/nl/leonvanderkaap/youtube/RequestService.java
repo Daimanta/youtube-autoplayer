@@ -150,6 +150,11 @@ public class RequestService {
                                     items.add(new PlaylistItem(itemId, title, Integer.parseInt(duration)));
                                 }
                             }
+                        } else if (listItemsObj instanceof LinkedHashMap<?,?> singleItem) {
+                            String itemId = (String) singleItem.get("id");
+                            String title = (String) ((LinkedHashMap<?,?>)singleItem.get("content")).get("name");
+                            String duration = (String) singleItem.get("duration");
+                            items.add(new PlaylistItem(itemId, title, Integer.parseInt(duration)));
                         }
                     }
                 }
