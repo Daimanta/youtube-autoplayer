@@ -3,10 +3,14 @@
 <script>
 function playPause() {
     fetch('/api/play');
+    setTimeout(() => {}, 200);
+    getPlaylist();
 }
 
 function stop() {
     fetch('/api/stop');
+    setTimeout(() => {}, 200);
+    getPlaylist();
 }
 
 function fullscreen() {
@@ -23,14 +27,20 @@ function volumedown() {
 
 function next() {
     fetch('api/next');
+    setTimeout(() => {}, 200);
+    getPlaylist();
 }
 
 function previous() {
     fetch('api/previous');
+    setTimeout(() => {}, 200);
+    getPlaylist();
 }
 
 function emptyPlaylist() {
     fetch('api/emptyplaylist');
+    setTimeout(() => {}, 200);
+    getPlaylist();
 }
 
 function addToQueue() {
