@@ -125,6 +125,19 @@ public class RequestService {
         }));
     }
 
+    public void selectItem(String item) {
+        executor.execute(new FutureTask<>(() -> {
+            String itemNumber;
+            if (item.startsWith("plid_")) {
+                itemNumber = item.substring("plid_".length());
+            } else {
+                itemNumber = item;
+            }
+            ResponseEntity<String> response = doRequest("localhost", "command=pl_play&id="+itemNumber);
+            return null;
+        }));
+    }
+
     public PlaylistInfo getPlaylist() {
 
         List<PlaylistItem> items = new ArrayList<>();

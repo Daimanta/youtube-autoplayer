@@ -3,14 +3,12 @@
 <script>
 function playPause() {
     fetch('/api/play');
-    setTimeout(() => {}, 200);
-    getPlaylist();
+    setTimeout(getPlaylist, 400);
 }
 
 function stop() {
     fetch('/api/stop');
-    setTimeout(() => {}, 200);
-    getPlaylist();
+    setTimeout(getPlaylist, 400);
 }
 
 function fullscreen() {
@@ -27,20 +25,17 @@ function volumedown() {
 
 function next() {
     fetch('api/next');
-    setTimeout(() => {}, 200);
-    getPlaylist();
+    setTimeout(getPlaylist, 400);
 }
 
 function previous() {
     fetch('api/previous');
-    setTimeout(() => {}, 200);
-    getPlaylist();
+    setTimeout(getPlaylist, 400);
 }
 
 function emptyPlaylist() {
     fetch('api/emptyplaylist');
-    setTimeout(() => {}, 200);
-    getPlaylist();
+    setTimeout(getPlaylist, 400);
 }
 
 function addToQueue() {
@@ -50,10 +45,14 @@ function addToQueue() {
     queueInputElement.value = "";
 }
 
+function playItem(itemId) {
+    fetch('api/select/'+itemId);
+    setTimeout(getPlaylist, 400);
+}
+
 function getPlaylist() {
     fetch('api/getplaylist').then(async (response) => {
         const data = await response.json();
-        console.log(data);
         const table_body = document.getElementById("playlist_table_body_id");
         table_body.innerHTML = "";
         if (data.items.length === 0) {
@@ -74,7 +73,16 @@ function getPlaylist() {
                     playActiveCol.textContent = "→";
                 }
                 const titleCol = document.createElement("td");
-                titleCol.textContent = entry.title;
+                if (entry.id.startsWith("plid_")) {
+                    const titleColLink = document.createElement("a");
+                    titleColLink.textContent = entry.title;
+                    titleColLink.href = "#";
+                    titleColLink.onclick = () => {playItem(entry.id)};
+                    titleCol.appendChild(titleColLink);
+                } else {
+                    titleCol.textContent = entry.title;
+                }
+
                 const durationCol = document.createElement("td");
                 durationCol.textContent = lengthString(entry.duration);
                 row.appendChild(playActiveCol);

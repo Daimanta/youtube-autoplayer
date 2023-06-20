@@ -76,4 +76,10 @@ public class RequestController {
     public PlaylistInfo getPlaylist() {
         return requestService.getPlaylist();
     }
+
+    @CrossOrigin
+    @GetMapping("/select/{item}")
+    public void selectItem(@PathVariable String item) {
+        requestService.selectItem(item);
+    }
 }
