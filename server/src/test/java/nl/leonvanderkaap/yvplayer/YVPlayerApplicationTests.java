@@ -1,10 +1,10 @@
-package nl.leonvanderkaap.youtube;
+package nl.leonvanderkaap.yvplayer;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class YoutubeApplicationTests {
+class YVPlayerApplicationTests {
 
     @Test
     void contextLoads() {

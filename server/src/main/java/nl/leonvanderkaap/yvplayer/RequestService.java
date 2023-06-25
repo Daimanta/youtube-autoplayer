@@ -1,10 +1,12 @@
-package nl.leonvanderkaap.youtube;
+package nl.leonvanderkaap.yvplayer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
+import nl.leonvanderkaap.yvplayer.youtube.SponsorBlockVideoSegmentResponse;
+import nl.leonvanderkaap.yvplayer.youtube.YoutubeDownloadService;
+import nl.leonvanderkaap.yvplayer.youtube.YoutubeVideoMetadata;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -241,7 +243,7 @@ public class RequestService {
             int seconds = duration % 60;
             return String.format("%02d:%02d", minutes, seconds);
         } else {
-            return "0:" + String.format("%02d", duration);
+            return "00:" + String.format("%02d", duration);
         }
     }
 
@@ -307,19 +309,21 @@ public class RequestService {
         String title;
         try {
             File metadataFile = new File(fullPath+".info.json");
-            JsonNode node = objectMapper.readTree(metadataFile);
-            JsonNode titleNode = node.get("title");
-            title = titleNode.asText();
+            YoutubeVideoMetadata node = objectMapper.readValue(metadataFile, YoutubeVideoMetadata.class);
+            title = node.getTitle();
             int duration = -1;
             try {
-                duration = node.get("formats").get(0).get("fragments").get(0).get("duration").asInt();
-            } catch (Exception e) {}
+                duration = (int) node.getFormats().get(0).getFragments().get(0).getDuration();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             if (LiveSettings.blockSponsors) {
-                return buildSponsorCheckedPlayListFile(node.get("id").asText(), fullPath, title, fileIdName, duration);
+                return buildSponsorCheckedPlayListFile(node.getId(), fullPath, title, fileIdName, duration);
             } else {
                 return buildRegularPlaylistFile(fullPath, title, fileIdName, duration);
             }
         } catch (IOException e) {
+            e.printStackTrace();
             log.warn("Could not read video metadata file");
             return null;
         }

@@ -1,4 +1,4 @@
-package nl.leonvanderkaap.youtube;
+package nl.leonvanderkaap.yvplayer;
 
 import lombok.Getter;
 import lombok.Setter;

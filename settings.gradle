@@ -1,2 +1,2 @@
-rootProject.name = 'youtube'
+rootProject.name = 'yvplayer'
 include("server", "firefoxplugin")

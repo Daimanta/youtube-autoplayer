@@ -1,4 +1,4 @@
-package nl.leonvanderkaap.youtube;
+package nl.leonvanderkaap.yvplayer;
 
 
 import java.util.Arrays;

@@ -1,4 +1,4 @@
-package nl.leonvanderkaap.youtube;
+package nl.leonvanderkaap.yvplayer;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,4 +1,4 @@
-package nl.leonvanderkaap.youtube;
+package nl.leonvanderkaap.yvplayer.youtube;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
