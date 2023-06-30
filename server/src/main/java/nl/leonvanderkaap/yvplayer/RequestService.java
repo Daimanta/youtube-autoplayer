@@ -4,11 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
+import nl.leonvanderkaap.yvplayer.commons.ApplicationFutureTask;
 import nl.leonvanderkaap.yvplayer.vlc.VlcCommunicatorService;
 import nl.leonvanderkaap.yvplayer.vlc.VlcPlaylistBuilder;
 import nl.leonvanderkaap.yvplayer.vlc.VlcPlaylistInfo;
 import nl.leonvanderkaap.yvplayer.vlc.VlcStatusInfo;
-import nl.leonvanderkaap.yvplayer.youtube.SponsorBlockVideoSegmentResponse;
+import nl.leonvanderkaap.yvplayer.youtube.FileInformation;
 import nl.leonvanderkaap.yvplayer.youtube.YoutubeDownloadService;
 import nl.leonvanderkaap.yvplayer.youtube.YoutubeVideoMetadata;
 import org.springframework.http.*;
@@ -27,19 +28,21 @@ import java.util.concurrent.FutureTask;
 @Slf4j
 public class RequestService {
 
-    private Executor executor;
-    private YoutubeDownloadService youtubeDownloadService;
-    private VlcCommunicatorService vlcCommunicatorService;
-    private VlcPlaylistBuilder vlcPlaylistBuilder;
+    private final Executor executor;
+    private final YoutubeDownloadService youtubeDownloadService;
+    private final VlcCommunicatorService vlcCommunicatorService;
+    private final VlcPlaylistBuilder vlcPlaylistBuilder;
+    private final RestTemplate restTemplate;
 
     // Enforces the order of added videos
     private final ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<>();
 
-    public RequestService(Executor executor, YoutubeDownloadService youtubeDownloadService, VlcCommunicatorService vlcCommunicatorService, VlcPlaylistBuilder vlcPlaylistBuilder) {
+    public RequestService(Executor executor, YoutubeDownloadService youtubeDownloadService, VlcCommunicatorService vlcCommunicatorService, VlcPlaylistBuilder vlcPlaylistBuilder, RestTemplate restTemplate) {
         this.executor = executor;
         this.youtubeDownloadService = youtubeDownloadService;
         this.vlcCommunicatorService = vlcCommunicatorService;
         this.vlcPlaylistBuilder = vlcPlaylistBuilder;
+        this.restTemplate = restTemplate;
     }
 
     public void queueVideo(String video) {
@@ -47,49 +50,49 @@ public class RequestService {
     }
 
     public void togglePlay() {
-        executor.execute(new FutureTask<>(() -> {
+        executor.execute(new ApplicationFutureTask<>(() -> {
             vlcCommunicatorService.togglePlay();
             return null;
         }));
     }
 
     public void play() {
-        executor.execute(new FutureTask<>(() -> {
+        executor.execute(new ApplicationFutureTask<>(() -> {
             vlcCommunicatorService.play();
             return null;
         }));
     }
 
     public void pause() {
-        executor.execute(new FutureTask<>(() -> {
+        executor.execute(new ApplicationFutureTask<>(() -> {
             vlcCommunicatorService.pause();
             return null;
         }));
     }
 
     public void stop() {
-        executor.execute(new FutureTask<>(() -> {
+        executor.execute(new ApplicationFutureTask<>(() -> {
             vlcCommunicatorService.stop();
             return null;
         }));
     }
 
     public void next() {
-        executor.execute(new FutureTask<>(() -> {
+        executor.execute(new ApplicationFutureTask<>(() -> {
             vlcCommunicatorService.next();
             return null;
         }));
     }
 
     public void previous() {
-        executor.execute(new FutureTask<>(() -> {
+        executor.execute(new ApplicationFutureTask<>(() -> {
             vlcCommunicatorService.previous();
             return null;
         }));
     }
 
     public void volumeUp() {
-        executor.execute(new FutureTask<>(() -> {
+        executor.execute(new ApplicationFutureTask<>(() -> {
             VlcStatusInfo status = vlcCommunicatorService.getStatus();
             int volume = Integer.parseInt(status.getVolume());
             int newVolume = volume + 12;
@@ -100,7 +103,7 @@ public class RequestService {
     }
 
     public void volumeDown() {
-        executor.execute(new FutureTask<>(() -> {
+        executor.execute(new ApplicationFutureTask<>(() -> {
             VlcStatusInfo status = vlcCommunicatorService.getStatus();
             int volume = Integer.parseInt(status.getVolume());
             int newVolume = volume - 12;
@@ -111,21 +114,21 @@ public class RequestService {
     }
 
     public void fullScreen() {
-        executor.execute(new FutureTask<>(() -> {
+        executor.execute(new ApplicationFutureTask<>(() -> {
             vlcCommunicatorService.fullScreen();
             return null;
         }));
     }
 
     public void emptyPlaylist() {
-        executor.execute(new FutureTask<>(() -> {
+        executor.execute(new ApplicationFutureTask<>(() -> {
             vlcCommunicatorService.emptyPlaylist();
             return null;
         }));
     }
 
     public void selectItem(String item) {
-        executor.execute(new FutureTask<>(() -> {
+        executor.execute(new ApplicationFutureTask<>(() -> {
             String itemNumber;
             if (item.startsWith("plid_")) {
                 itemNumber = item.substring("plid_".length());
@@ -159,12 +162,14 @@ public class RequestService {
     }
 
     private FutureTask<Void> getVideoQueueFuture(String video) {
-        return new FutureTask<>(() -> {
-            FileInformation fileInformation = youtubeDownloadService.download(video);
-            if (fileInformation == null) {
+        return new ApplicationFutureTask<>(() -> {
+            Optional<FileInformation> fileInformationOpt = youtubeDownloadService.download(video);
+            if (fileInformationOpt.isEmpty()) {
                 log.warn("Download failed!");
                 return null;
             }
+
+            FileInformation fileInformation = fileInformationOpt.get();
 
             // If we arrive here, the download has completed without error(?). We can now play the file
             queueVideo(fileInformation.path(), fileInformation.fileId());
@@ -220,8 +225,7 @@ public class RequestService {
         return restTemplate.exchange(uri, HttpMethod.GET, requestEntity, clazz);
     }
 
-    private static ResponseEntity<String> doRequest(String host, String command) {
-        RestTemplate restTemplate = new RestTemplate();
+    private ResponseEntity<String> doRequest(String host, String command) {
         URI enqueueURL;
         try {
             enqueueURL = new URI("http", null, host, LiveSettings.vlcPort, "/requests/status.xml", command, null);

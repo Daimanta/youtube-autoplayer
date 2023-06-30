@@ -1,7 +1,6 @@
 package nl.leonvanderkaap.yvplayer.youtube;
 
 import lombok.extern.slf4j.Slf4j;
-import nl.leonvanderkaap.yvplayer.FileInformation;
 import nl.leonvanderkaap.yvplayer.LiveSettings;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.stereotype.Service;
@@ -12,12 +11,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
 public class YoutubeDownloadService {
 
-    public FileInformation download(String video) {
+    public Optional<FileInformation> download(String video) {
+        if (video == null || video.isBlank()) return Optional.empty();
         int index = video.indexOf("watch?v=");
         String fileName;
         if (index == -1) {
@@ -57,9 +58,9 @@ public class YoutubeDownloadService {
             if (downloadResult.exitValue() != 0) throw new RuntimeException();
         } catch (Exception e) {
             log.warn("Download failed: ", e);
-            return null;
+            return Optional.empty();
         }
-        return new FileInformation(folderPath+File.separator+fileName, fileName);
+        return Optional.of(new FileInformation(folderPath+File.separator+fileName, fileName));
     }
 
     private static String wrap(String str) {

@@ -1,6 +1,7 @@
 package nl.leonvanderkaap.yvplayer;
 
 import lombok.extern.slf4j.Slf4j;
+import nl.leonvanderkaap.yvplayer.commons.ApplicationSettings;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.event.EventListener;

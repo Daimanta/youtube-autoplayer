@@ -1,4 +1,4 @@
-package nl.leonvanderkaap.yvplayer;
+package nl.leonvanderkaap.yvplayer.commons;
 
 import lombok.Getter;
 import lombok.Setter;

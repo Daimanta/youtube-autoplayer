@@ -2,6 +2,7 @@ package nl.leonvanderkaap.yvplayer.vlc;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import lombok.RequiredArgsConstructor;
 import nl.leonvanderkaap.yvplayer.LiveSettings;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -9,11 +10,14 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class VlcCommunicatorService {
+
+    private final RestTemplate restTemplate;
+
 
     public ResponseEntity<String> togglePlay() {
         return doRequest("localhost", "command=pl_pause");
@@ -56,7 +60,6 @@ public class VlcCommunicatorService {
     }
 
     private ResponseEntity<String> doRequest(String host, String command) {
-        RestTemplate restTemplate = new RestTemplate();
         URI enqueueURL;
         try {
             enqueueURL = new URI("http", null, host, LiveSettings.vlcPort, "/requests/status.xml", command, null);
@@ -88,7 +91,6 @@ public class VlcCommunicatorService {
     }
 
     public ResponseEntity<String> getPlaylist(String host) {
-        RestTemplate restTemplate = new RestTemplate();
         URI enqueueURL;
         try {
             enqueueURL = new URI("http", null, host, LiveSettings.vlcPort, "/requests/playlist_jstree.xml", null, null);

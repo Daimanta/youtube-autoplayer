@@ -41,6 +41,7 @@ function emptyPlaylist() {
 function addToQueue() {
     const queueInputElement = document.getElementById("queue_input_id");
     const video = queueInputElement.value || null;
+    if (video == null) return;
     fetch('api/queue?video=' + video);
     queueInputElement.value = "";
 }

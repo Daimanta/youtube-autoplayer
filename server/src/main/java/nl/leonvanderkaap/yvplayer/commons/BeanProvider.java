@@ -1,8 +1,9 @@
-package nl.leonvanderkaap.yvplayer;
+package nl.leonvanderkaap.yvplayer.commons;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.concurrent.Executor;
 
@@ -18,5 +19,10 @@ public class BeanProvider {
         executor.setThreadNamePrefix("PlayerThread-");
         executor.initialize();
         return executor;
+    }
+
+    @Bean
+    public RestTemplate buildRestTemplate() {
+        return new RestTemplate();
     }
 }
