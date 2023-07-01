@@ -146,7 +146,14 @@ public class RequestService {
 
         List<PlaylistItem> items;
 
-        ResponseEntity<String> playlistEntity = vlcCommunicatorService.getPlaylist("localhost");
+
+        ResponseEntity<String> playlistEntity;
+        try {
+            playlistEntity = vlcCommunicatorService.getPlaylist("localhost");
+        } catch (Exception e) {
+            return PlaylistInfo.EMPTY;
+        }
+
         String playlistXmlString = playlistEntity.getBody();
         if (SystemUtils.IS_OS_WINDOWS && playlistXmlString != null) {
             playlistXmlString = new String(playlistXmlString.getBytes(StandardCharsets.ISO_8859_1));

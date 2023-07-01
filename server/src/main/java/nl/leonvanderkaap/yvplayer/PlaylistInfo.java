@@ -3,6 +3,7 @@ package nl.leonvanderkaap.yvplayer;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Collections;
 import java.util.List;
 
 @NoArgsConstructor
@@ -17,4 +18,6 @@ public class PlaylistInfo {
         this.playbackState = playbackState;
         this.items = items;
     }
+
+    public static PlaylistInfo EMPTY = new PlaylistInfo(-1, "stopped", Collections.emptyList());
 }
