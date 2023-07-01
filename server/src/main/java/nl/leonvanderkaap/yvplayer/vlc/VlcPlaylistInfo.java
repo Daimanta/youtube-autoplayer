@@ -44,6 +44,7 @@ public class VlcPlaylistInfo {
     public List<PlaylistItem> toPlaylistItems() {
         List<PlaylistItem> result = new ArrayList<>();
         ListDetails listDetails = this.item.getItem().get(0);
+        if (listDetails == null || listDetails.getItem() == null) return result;
         for (ItemDetails itemDetails: listDetails.getItem()) {
             result.add(new PlaylistItem(itemDetails.id, itemDetails.name, Integer.parseInt(itemDetails.duration)));
         }

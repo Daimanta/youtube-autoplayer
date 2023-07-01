@@ -12,6 +12,7 @@ import nl.leonvanderkaap.yvplayer.vlc.VlcStatusInfo;
 import nl.leonvanderkaap.yvplayer.youtube.FileInformation;
 import nl.leonvanderkaap.yvplayer.youtube.YoutubeDownloadService;
 import nl.leonvanderkaap.yvplayer.youtube.YoutubeVideoMetadata;
+import org.apache.commons.lang3.SystemUtils;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -19,6 +20,7 @@ import org.springframework.web.client.RestTemplate;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
@@ -146,6 +148,10 @@ public class RequestService {
 
         ResponseEntity<String> playlistEntity = vlcCommunicatorService.getPlaylist("localhost");
         String playlistXmlString = playlistEntity.getBody();
+        if (SystemUtils.IS_OS_WINDOWS && playlistXmlString != null) {
+            playlistXmlString = new String(playlistXmlString.getBytes(StandardCharsets.ISO_8859_1));
+        }
+
         XmlMapper xmlMapper = new XmlMapper();
         try {
             VlcPlaylistInfo vlcPlaylistInfo = xmlMapper.readValue(playlistXmlString, VlcPlaylistInfo.class);

@@ -70,7 +70,7 @@ public class RequestController {
     }
 
     @CrossOrigin
-    @GetMapping(value = "/getplaylist", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/getplaylist", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public PlaylistInfo getPlaylist() {
         return requestService.getPlaylist();
     }
