@@ -3,14 +3,17 @@ package nl.leonvanderkaap.yvplayer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.leonvanderkaap.yvplayer.commons.ApplicationFutureTask;
+import nl.leonvanderkaap.yvplayer.smb.SmbProcessingService;
 import nl.leonvanderkaap.yvplayer.vlc.VlcCommunicatorService;
 import nl.leonvanderkaap.yvplayer.vlc.VlcPlaylistBuilder;
 import nl.leonvanderkaap.yvplayer.vlc.VlcPlaylistInfo;
 import nl.leonvanderkaap.yvplayer.vlc.VlcStatusInfo;
 import nl.leonvanderkaap.yvplayer.youtube.FileInformation;
 import nl.leonvanderkaap.yvplayer.youtube.YoutubeDownloadService;
+import nl.leonvanderkaap.yvplayer.youtube.YoutubeProcessingService;
 import nl.leonvanderkaap.yvplayer.youtube.YoutubeVideoMetadata;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.http.*;
@@ -28,6 +31,7 @@ import java.util.concurrent.FutureTask;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class RequestService {
 
     private final Executor executor;
@@ -35,17 +39,12 @@ public class RequestService {
     private final VlcCommunicatorService vlcCommunicatorService;
     private final VlcPlaylistBuilder vlcPlaylistBuilder;
     private final RestTemplate restTemplate;
+    private final YoutubeProcessingService youtubeProcessingService;
+    private final SmbProcessingService smbProcessingService;
 
     // Enforces the order of added videos
     private final ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<>();
 
-    public RequestService(Executor executor, YoutubeDownloadService youtubeDownloadService, VlcCommunicatorService vlcCommunicatorService, VlcPlaylistBuilder vlcPlaylistBuilder, RestTemplate restTemplate) {
-        this.executor = executor;
-        this.youtubeDownloadService = youtubeDownloadService;
-        this.vlcCommunicatorService = vlcCommunicatorService;
-        this.vlcPlaylistBuilder = vlcPlaylistBuilder;
-        this.restTemplate = restTemplate;
-    }
 
     public void queueVideo(String video) {
         executor.execute(getVideoQueueFuture(video));
@@ -176,78 +175,17 @@ public class RequestService {
 
     private FutureTask<Void> getVideoQueueFuture(String video) {
         return new ApplicationFutureTask<>(() -> {
-            Optional<FileInformation> fileInformationOpt = youtubeDownloadService.download(video);
-            if (fileInformationOpt.isEmpty()) {
-                log.warn("Download failed!");
+            FileQueueService fileQueueService;
+            if (video.contains("youtube.com") || (video.length() < 13)) {
+                fileQueueService = youtubeProcessingService;
+            } else if (video.startsWith("smb://")) {
+                fileQueueService = smbProcessingService;
+            } else {
                 return null;
             }
-
-            FileInformation fileInformation = fileInformationOpt.get();
-
-            // If we arrive here, the download has completed without error(?). We can now play the file
-            queueVideo(fileInformation.path(), fileInformation.fileId());
-            File target = new File(fileInformation.path());
-            target.deleteOnExit();
-
+            fileQueueService.downloadAndQueueVideo(video);
             return null;
         });
     }
-
-    private void queueVideo(String fullPath, String fileIdName) {
-        log.debug("Trying to enqueue file");
-        String playListLocation = buildPlaylist(fullPath, fileIdName);
-        if (playListLocation == null) return;
-        ResponseEntity<String> response = doRequest("localhost", "command=in_enqueue&input=file:///" + playListLocation.replace("\\", "/"));
-
-        log.debug("Adding vlc video to queue");
-    }
-
-    private String buildPlaylist(String fullPath, String fileIdName) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        String title;
-        try {
-            File metadataFile = new File(fullPath+".info.json");
-            YoutubeVideoMetadata node = objectMapper.readValue(metadataFile, YoutubeVideoMetadata.class);
-            title = node.getTitle();
-            int duration = -1;
-            try {
-                duration = (int) node.getFormats().get(0).getFragments().get(0).getDuration();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            if (LiveSettings.blockSponsors) {
-                return vlcPlaylistBuilder.buildSponsorCheckedPlayListFile(node.getId(), fullPath, title, fileIdName, duration);
-            } else {
-                return vlcPlaylistBuilder.buildRegularPlaylistFile(fullPath, title, fileIdName, duration);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            log.warn("Could not read video metadata file");
-            return null;
-        }
-
-    }
-
-    private static <T> ResponseEntity<T> get(RestTemplate restTemplate, URI uri, Map<String, String> headers, Class<T> clazz) {
-        HttpHeaders httpHeaders = new HttpHeaders();
-        for (String header: headers.keySet()) {
-            httpHeaders.set(header, headers.get(header));
-        }
-        httpHeaders.setContentType(MediaType.TEXT_XML);
-        HttpEntity<Void> requestEntity = new HttpEntity<>(httpHeaders);
-        return restTemplate.exchange(uri, HttpMethod.GET, requestEntity, clazz);
-    }
-
-    private ResponseEntity<String> doRequest(String host, String command) {
-        URI enqueueURL;
-        try {
-            enqueueURL = new URI("http", null, host, LiveSettings.vlcPort, "/requests/status.xml", command, null);
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-
-        return get(restTemplate, enqueueURL, Map.of("Authorization", "Basic " + LiveSettings.vlcPasswordBasicAuth()), String.class);
-    }
-
 
 }

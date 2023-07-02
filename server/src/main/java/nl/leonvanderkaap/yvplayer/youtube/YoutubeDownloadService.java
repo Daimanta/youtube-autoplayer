@@ -27,12 +27,7 @@ public class YoutubeDownloadService {
             fileName = video.substring(index+"watch?v=".length());
         }
 
-        String folderPath = LiveSettings.tempfolder;
-        if (!folderPath.endsWith(File.separator)) {
-            folderPath += File.separator;
-        }
-
-        folderPath += LiveSettings.DOWNLOAD_POSTFIX;
+        String folderPath = LiveSettings.getDownloadFolder();
 
         List<String> downloadArgumentList = new ArrayList<>();
         downloadArgumentList.add(LiveSettings.ytdlp);

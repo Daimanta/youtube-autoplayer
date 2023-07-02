@@ -59,6 +59,10 @@ public class VlcCommunicatorService {
         return doRequest("localhost", "command=pl_play&id="+item);
     }
 
+    public ResponseEntity<String> addItemToPlayList(String item) {
+        return doRequest("localhost", "command=in_enqueue&input=file:///" + item.replace("\\", "/"));
+    }
+
     private ResponseEntity<String> doRequest(String host, String command) {
         URI enqueueURL;
         try {

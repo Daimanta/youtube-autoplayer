@@ -1,6 +1,7 @@
 package nl.leonvanderkaap.yvplayer;
 
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
@@ -24,5 +25,15 @@ public class LiveSettings {
 
     public static String vlcPasswordBasicAuth() {
         return Base64.getEncoder().encodeToString((":"+vlcPassword).getBytes());
+    }
+
+    public static String getDownloadFolder() {
+        String folderPath = LiveSettings.tempfolder;
+        if (!folderPath.endsWith(File.separator)) {
+            folderPath += File.separator;
+        }
+
+        folderPath += LiveSettings.DOWNLOAD_POSTFIX;
+        return folderPath;
     }
 }
