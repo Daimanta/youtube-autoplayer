@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import nl.leonvanderkaap.yvplayer.PlaylistItem;
 
 import java.util.ArrayList;
 import java.util.List;

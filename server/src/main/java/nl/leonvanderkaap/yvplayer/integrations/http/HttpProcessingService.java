@@ -2,7 +2,10 @@ package nl.leonvanderkaap.yvplayer.integrations.http;
 
 import lombok.RequiredArgsConstructor;
 import nl.leonvanderkaap.yvplayer.FileQueueService;
-import nl.leonvanderkaap.yvplayer.LiveSettings;
+import nl.leonvanderkaap.yvplayer.commons.LiveSettings;
+import nl.leonvanderkaap.yvplayer.management.MessageLog;
+import nl.leonvanderkaap.yvplayer.management.StatusService;
+import nl.leonvanderkaap.yvplayer.management.StatusType;
 import nl.leonvanderkaap.yvplayer.vlc.VlcCommunicatorService;
 import nl.leonvanderkaap.yvplayer.vlc.VlcPlaylistBuilder;
 import org.springframework.stereotype.Service;
@@ -28,11 +31,13 @@ public class HttpProcessingService implements FileQueueService {
 
     private final VlcPlaylistBuilder vlcPlaylistBuilder;
     private final VlcCommunicatorService vlcCommunicatorService;
+    private final StatusService statusService;
 
     @Override
     public void downloadAndQueueVideo(String video) {
         String lowerCased = video.toLowerCase();
         if (MOVIE_EXTENSIONS.stream().noneMatch(x -> lowerCased.endsWith("."+x))) {
+            statusService.addError("Not a recognized video file");
             return;
         }
 
@@ -52,6 +57,7 @@ public class HttpProcessingService implements FileQueueService {
         if (!folderPath.endsWith(File.separator)) folderPath += File.separator;
         String fullPath = folderPath + targetFileName;
 
+        statusService.addStartedDownload(title);
         try (BufferedInputStream in = new BufferedInputStream(url.openStream());
              FileOutputStream fileOutputStream = new FileOutputStream(fullPath)) {
             byte[] dataBuffer = new byte[1024 * 1024 * 8];
@@ -65,6 +71,6 @@ public class HttpProcessingService implements FileQueueService {
 
         String playlistLocation = vlcPlaylistBuilder.buildRegularPlaylistFile(fullPath, title, targetFileName, -1);
         vlcCommunicatorService.addItemToPlayList(playlistLocation);
-
+        statusService.addedToQueue(title);
     }
 }

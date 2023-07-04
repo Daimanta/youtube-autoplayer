@@ -1,7 +1,7 @@
 package nl.leonvanderkaap.yvplayer.integrations.youtube;
 
 import lombok.extern.slf4j.Slf4j;
-import nl.leonvanderkaap.yvplayer.LiveSettings;
+import nl.leonvanderkaap.yvplayer.commons.LiveSettings;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.stereotype.Service;
 

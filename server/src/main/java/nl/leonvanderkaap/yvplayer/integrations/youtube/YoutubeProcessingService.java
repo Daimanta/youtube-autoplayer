@@ -4,7 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.leonvanderkaap.yvplayer.FileQueueService;
-import nl.leonvanderkaap.yvplayer.LiveSettings;
+import nl.leonvanderkaap.yvplayer.commons.LiveSettings;
+import nl.leonvanderkaap.yvplayer.management.StatusService;
 import nl.leonvanderkaap.yvplayer.vlc.VlcCommunicatorService;
 import nl.leonvanderkaap.yvplayer.vlc.VlcPlaylistBuilder;
 import org.springframework.http.*;
@@ -22,11 +23,13 @@ public class YoutubeProcessingService implements FileQueueService {
     private final YoutubeDownloadService youtubeDownloadService;
     private final VlcPlaylistBuilder vlcPlaylistBuilder;
     private final VlcCommunicatorService vlcCommunicatorService;
+    private final StatusService statusService;
 
     public void downloadAndQueueVideo(String video) {
+        statusService.addOk(String.format("Started download of '%s'", video));
         Optional<FileInformation> fileInformationOpt = youtubeDownloadService.download(video);
         if (fileInformationOpt.isEmpty()) {
-            log.warn("Download failed!");
+            statusService.addError("Youtube download failed");
             return;
         }
 
@@ -39,12 +42,9 @@ public class YoutubeProcessingService implements FileQueueService {
     }
 
     private void queueVideo(String fullPath, String fileIdName) {
-        log.debug("Trying to enqueue file");
         String playListLocation = buildPlaylist(fullPath, fileIdName);
         if (playListLocation == null) return;
         ResponseEntity<String> response = vlcCommunicatorService.addItemToPlayList(playListLocation);
-
-        log.debug("Adding vlc video to queue");
     }
 
     private String buildPlaylist(String fullPath, String fileIdName) {
@@ -61,13 +61,15 @@ public class YoutubeProcessingService implements FileQueueService {
                 e.printStackTrace();
             }
             if (LiveSettings.blockSponsors) {
+                statusService.addedToQueue(title);
                 return vlcPlaylistBuilder.buildSponsorCheckedPlayListFile(node.getId(), fullPath, title, fileIdName, duration);
             } else {
+                statusService.addedToQueue(title);
                 return vlcPlaylistBuilder.buildRegularPlaylistFile(fullPath, title, fileIdName, duration);
             }
+
         } catch (IOException e) {
-            e.printStackTrace();
-            log.warn("Could not read video metadata file");
+            statusService.addError(e.getMessage());
             return null;
         }
     }

@@ -7,9 +7,9 @@ import lombok.extern.slf4j.Slf4j;
 import nl.leonvanderkaap.yvplayer.commons.ApplicationFutureTask;
 import nl.leonvanderkaap.yvplayer.integrations.http.HttpProcessingService;
 import nl.leonvanderkaap.yvplayer.integrations.smb.SmbProcessingService;
-import nl.leonvanderkaap.yvplayer.vlc.VlcCommunicatorService;
-import nl.leonvanderkaap.yvplayer.vlc.VlcPlaylistInfo;
-import nl.leonvanderkaap.yvplayer.vlc.VlcStatusInfo;
+import nl.leonvanderkaap.yvplayer.management.MessageLog;
+import nl.leonvanderkaap.yvplayer.management.StatusService;
+import nl.leonvanderkaap.yvplayer.vlc.*;
 import nl.leonvanderkaap.yvplayer.integrations.youtube.YoutubeProcessingService;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.http.*;
@@ -30,6 +30,7 @@ public class RequestService {
     private final YoutubeProcessingService youtubeProcessingService;
     private final SmbProcessingService smbProcessingService;
     private final HttpProcessingService httpProcessingService;
+    private final StatusService statusService;
 
 
     public void queueVideo(String video) {
@@ -125,6 +126,10 @@ public class RequestService {
             vlcCommunicatorService.selectItem(itemNumber);
             return null;
         }));
+    }
+
+    public List<MessageLog> getStatus() {
+        return statusService.getStatus();
     }
 
     public PlaylistInfo getPlaylist() {

@@ -5,7 +5,10 @@ import jcifs.smb.SmbFile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.leonvanderkaap.yvplayer.FileQueueService;
-import nl.leonvanderkaap.yvplayer.LiveSettings;
+import nl.leonvanderkaap.yvplayer.commons.LiveSettings;
+import nl.leonvanderkaap.yvplayer.management.MessageLog;
+import nl.leonvanderkaap.yvplayer.management.StatusService;
+import nl.leonvanderkaap.yvplayer.management.StatusType;
 import nl.leonvanderkaap.yvplayer.vlc.VlcCommunicatorService;
 import nl.leonvanderkaap.yvplayer.vlc.VlcPlaylistBuilder;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
@@ -25,6 +28,7 @@ public class SmbProcessingService implements FileQueueService {
 
     private final VlcPlaylistBuilder vlcPlaylistBuilder;
     private final VlcCommunicatorService vlcCommunicatorService;
+    private final StatusService statusService;
 
     @PostConstruct
     public void setup() {
@@ -36,11 +40,15 @@ public class SmbProcessingService implements FileQueueService {
         try {
             smbFile = new SmbFile(video);
         } catch (MalformedURLException e) {
-            log.warn("Incorrect smb url format");
+            statusService.addError("Incorrect smb url format");
             return;
         }
+
         try {
-            if (!smbFile.isFile()) return;
+            if (!smbFile.isFile()) {
+                statusService.addError("Smb location is not a file");
+                return;
+            }
             String title = smbFile.getName();
             InputStream smbFileInputStream = smbFile.getInputStream();
             String folderPath = LiveSettings.getDownloadFolder();
@@ -50,6 +58,7 @@ public class SmbProcessingService implements FileQueueService {
             OutputStream outStream = new FileOutputStream(localFile);
             byte[] buffer = new byte[8 * 1024 * 1024];
             int bytesRead;
+            statusService.addStartedDownload(title);
             while ((bytesRead = smbFileInputStream.read(buffer)) != -1) {
                 outStream.write(buffer, 0, bytesRead);
             }
@@ -57,8 +66,9 @@ public class SmbProcessingService implements FileQueueService {
             IOUtils.closeQuietly(outStream);
             String playlistLocation = vlcPlaylistBuilder.buildRegularPlaylistFile(folderPath + targetFileName, title, targetFileName, -1);
             vlcCommunicatorService.addItemToPlayList(playlistLocation);
+            statusService.addedToQueue(title);
         } catch (Exception e) {
-            log.warn(e.getMessage());
+            statusService.addError(e.getMessage());
         } finally {
             smbFile.close();
         }

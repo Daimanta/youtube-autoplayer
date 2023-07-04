@@ -3,7 +3,7 @@ package nl.leonvanderkaap.yvplayer.vlc;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.RequiredArgsConstructor;
-import nl.leonvanderkaap.yvplayer.LiveSettings;
+import nl.leonvanderkaap.yvplayer.commons.LiveSettings;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
