@@ -1,4 +1,4 @@
-package nl.leonvanderkaap.yvplayer.youtube;
+package nl.leonvanderkaap.yvplayer.integrations.youtube;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

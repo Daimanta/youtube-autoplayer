@@ -1,4 +1,4 @@
-package nl.leonvanderkaap.yvplayer.youtube;
+package nl.leonvanderkaap.yvplayer.integrations.youtube;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

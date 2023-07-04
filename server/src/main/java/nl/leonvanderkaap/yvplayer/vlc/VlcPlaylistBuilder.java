@@ -1,7 +1,7 @@
 package nl.leonvanderkaap.yvplayer.vlc;
 
 import lombok.extern.slf4j.Slf4j;
-import nl.leonvanderkaap.yvplayer.youtube.SponsorBlockVideoSegmentResponse;
+import nl.leonvanderkaap.yvplayer.integrations.youtube.SponsorBlockVideoSegmentResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;

@@ -1,4 +1,4 @@
-package nl.leonvanderkaap.yvplayer.smb;
+package nl.leonvanderkaap.yvplayer.integrations.smb;
 
 import jakarta.annotation.PostConstruct;
 import jcifs.smb.SmbFile;

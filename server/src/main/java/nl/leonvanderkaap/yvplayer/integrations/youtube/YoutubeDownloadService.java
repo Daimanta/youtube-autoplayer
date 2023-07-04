@@ -1,4 +1,4 @@
-package nl.leonvanderkaap.yvplayer.youtube;
+package nl.leonvanderkaap.yvplayer.integrations.youtube;
 
 import lombok.extern.slf4j.Slf4j;
 import nl.leonvanderkaap.yvplayer.LiveSettings;

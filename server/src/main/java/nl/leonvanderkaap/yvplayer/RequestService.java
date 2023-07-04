@@ -1,31 +1,22 @@
 package nl.leonvanderkaap.yvplayer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.leonvanderkaap.yvplayer.commons.ApplicationFutureTask;
-import nl.leonvanderkaap.yvplayer.smb.SmbProcessingService;
+import nl.leonvanderkaap.yvplayer.integrations.http.HttpProcessingService;
+import nl.leonvanderkaap.yvplayer.integrations.smb.SmbProcessingService;
 import nl.leonvanderkaap.yvplayer.vlc.VlcCommunicatorService;
-import nl.leonvanderkaap.yvplayer.vlc.VlcPlaylistBuilder;
 import nl.leonvanderkaap.yvplayer.vlc.VlcPlaylistInfo;
 import nl.leonvanderkaap.yvplayer.vlc.VlcStatusInfo;
-import nl.leonvanderkaap.yvplayer.youtube.FileInformation;
-import nl.leonvanderkaap.yvplayer.youtube.YoutubeDownloadService;
-import nl.leonvanderkaap.yvplayer.youtube.YoutubeProcessingService;
-import nl.leonvanderkaap.yvplayer.youtube.YoutubeVideoMetadata;
+import nl.leonvanderkaap.yvplayer.integrations.youtube.YoutubeProcessingService;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
-import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.FutureTask;
 
@@ -35,15 +26,10 @@ import java.util.concurrent.FutureTask;
 public class RequestService {
 
     private final Executor executor;
-    private final YoutubeDownloadService youtubeDownloadService;
     private final VlcCommunicatorService vlcCommunicatorService;
-    private final VlcPlaylistBuilder vlcPlaylistBuilder;
-    private final RestTemplate restTemplate;
     private final YoutubeProcessingService youtubeProcessingService;
     private final SmbProcessingService smbProcessingService;
-
-    // Enforces the order of added videos
-    private final ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<>();
+    private final HttpProcessingService httpProcessingService;
 
 
     public void queueVideo(String video) {
@@ -180,6 +166,8 @@ public class RequestService {
                 fileQueueService = youtubeProcessingService;
             } else if (video.startsWith("smb://")) {
                 fileQueueService = smbProcessingService;
+            } else if (video.startsWith("http://") || video.startsWith("https://")) {
+                fileQueueService = httpProcessingService;
             } else {
                 return null;
             }
