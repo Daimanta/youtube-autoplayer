@@ -3,6 +3,7 @@ package nl.leonvanderkaap.yvplayer;
 import lombok.extern.slf4j.Slf4j;
 import nl.leonvanderkaap.yvplayer.management.MessageLog;
 import nl.leonvanderkaap.yvplayer.vlc.PlaylistInfo;
+import nl.leonvanderkaap.yvplayer.vlc.VlcStatusInfo;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,16 +58,11 @@ public class RequestController {
         requestService.previous();
     }
 
-    @CrossOrigin
-    @GetMapping("/volumeup")
-    public void volumeUp() {
-        requestService.volumeUp();
-    }
 
     @CrossOrigin
-    @GetMapping("/volumedown")
-    public void volumeDown() {
-        requestService.volumeDown();
+    @GetMapping("/setvolume")
+    public void setVolume(@RequestParam(required = true) int value) {
+        requestService.setVolume(value);
     }
 
     @CrossOrigin
@@ -91,5 +87,12 @@ public class RequestController {
     @GetMapping(value = "/status", produces = APPLICATION_JSON_VALUE)
     public List<MessageLog> getStatus() {
         return requestService.getStatus();
+    }
+
+
+    @CrossOrigin
+    @GetMapping(value = "/vlcstatus", produces = APPLICATION_JSON_VALUE)
+    public VlcStatusInfo getVlcStatusInfo() {
+        return requestService.getVlcStatusInfo();
     }
 }

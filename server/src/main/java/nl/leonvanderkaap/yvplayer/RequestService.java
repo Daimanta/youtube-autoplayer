@@ -79,24 +79,12 @@ public class RequestService {
         }));
     }
 
-    public void volumeUp() {
+    public void setVolume(int volume) {
         executor.execute(new ApplicationFutureTask<>(() -> {
-            VlcStatusInfo status = vlcCommunicatorService.getStatus();
-            int volume = Integer.parseInt(status.getVolume());
-            int newVolume = volume + 12;
-            if (newVolume > 512) newVolume = 512;
-            vlcCommunicatorService.setVolume(newVolume);
-            return null;
-        }));
-    }
-
-    public void volumeDown() {
-        executor.execute(new ApplicationFutureTask<>(() -> {
-            VlcStatusInfo status = vlcCommunicatorService.getStatus();
-            int volume = Integer.parseInt(status.getVolume());
-            int newVolume = volume - 12;
-            if (newVolume < 0) newVolume = 0;
-            vlcCommunicatorService.setVolume(newVolume);
+            // Slider value goes up to 125, this translates to value 320
+            // Max possible value is 200 at 512 but this is not shown in the VLC slider
+            int value = (int) (((volume * 1.0) / 125.0) * 320.0);
+            vlcCommunicatorService.setVolume(value);
             return null;
         }));
     }
@@ -130,6 +118,10 @@ public class RequestService {
 
     public List<MessageLog> getStatus() {
         return statusService.getStatus();
+    }
+
+    public VlcStatusInfo getVlcStatusInfo() {
+        return vlcCommunicatorService.getStatus();
     }
 
     public PlaylistInfo getPlaylist() {

@@ -51,6 +51,16 @@ function playItem(itemId) {
     setTimeout(getPlaylist, 400);
 }
 
+function setVolume() {
+    const value = document.getElementById("volume_slider_id").value;
+    fetch('api/setvolume?value=' + document.getElementById("volume_slider_id").value);
+    document.getElementById("volume_value_id").textContent = value;
+}
+
+function updateValue() {
+    document.getElementById("volume_value_id").textContent = document.getElementById("volume_slider_id").value;
+}
+
 function getPlaylist() {
     fetch('api/getplaylist').then(async (response) => {
         const data = await response.json();
@@ -109,6 +119,19 @@ function lengthString(duration) {
         return "00:" + (""+duration).padStart(2, '0');
     }
 }
+
+function executeOnPageLoad() {
+    fetch("api/vlcstatus").then(
+        async (response) => {
+            const data = await response.json();
+            const volume = Math.floor((data.volume / 512.0) * 200.0);
+            document.getElementById("volume_slider_id").value = volume;
+            document.getElementById("volume_value_id").textContent = volume;
+        }
+    );
+}
+
+window.onload = executeOnPageLoad;
 </script>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="utf-8"/>
@@ -117,12 +140,12 @@ function lengthString(duration) {
 </head>
 <h1>Playback remote control</h1>
 
-<button type="button" class="iconbutton" onclick="playPause()">⏯</button>
-<button type="button" class="iconbutton" onclick="stop()">⏹</button>
-<button type="button" class="iconbutton" onclick="previous()">⏮</button>
-<button type="button" class="iconbutton" onclick="next()">⏭</button>
-<button type="button" class="invertediconbutton" onclick="volumedown()">🕩</button>
-<button type="button" class="invertediconbutton" onclick="volumeup()">🕪</button>
+<button type="button" class="iconbutton" onclick="playPause()"><img src="images/play.svg" height="25"/></button>
+<button type="button" class="iconbutton" onclick="stop()"><img src="images/stop.svg" height="25"/></button>
+<button type="button" class="iconbutton" onclick="previous()"><img src="images/back.svg" height="25"/></button>
+<button type="button" class="iconbutton" onclick="next()"><img src="images/forward.svg" height="25"/></button>
+<input type="range" min="1" max="125" value="50" class="slider" id="volume_slider_id" onchange="setVolume()" oninput="updateValue()">
+<span id="volume_value_id">0</span>
 <br>
 <button type="button" class="textbutton" onclick="fullscreen()">Fullscreen</button>
 <button type="button" class="textbutton" onclick="emptyPlaylist()">Empty playlist</button>

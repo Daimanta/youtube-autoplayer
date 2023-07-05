@@ -28,3 +28,8 @@
 table, th, td {
     border: 1px solid black;
 }
+
+#volume_value_id {
+    font-size: 20px;
+    font-weight: bold;
+}
