@@ -3,6 +3,7 @@
 <script src="scripts.js"></script>
 <script>
 window.onload = executeOnPageLoad;
+window.setInterval(updatePageState, 10_000);
 </script>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="utf-8"/>
@@ -18,13 +19,15 @@ window.onload = executeOnPageLoad;
 <input type="range" min="1" max="125" value="50" class="slider" id="volume_slider_id" onchange="setVolume()" oninput="updateValue()">
 <span id="volume_value_id">0</span>
 <br>
+<input type="range" min="0" max="100" value="0" class="slider" id="playback_slider_id" style="width: 500px;" onchange="setTime()">
+<span id="playback_slider_text_id">00:00:00</span>
+<br>
 <button type="button" class="textbutton" onclick="fullscreen()">Fullscreen</button>
 <button type="button" class="textbutton" onclick="emptyPlaylist()">Empty playlist</button>
 <br>
 <input type="text" id="queue_input_id" style="width:30em">
 <button type="button" class="textbutton" onclick="addToQueue()">Add to queue</button>
 <br>
-<button type="button" class="textbutton" onclick="getPlaylist()">Refresh playlist</button>
 <table id="playlist_table_id">
     <thead>
     <tr>

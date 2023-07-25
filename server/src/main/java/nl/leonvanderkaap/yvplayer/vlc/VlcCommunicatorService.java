@@ -47,6 +47,10 @@ public class VlcCommunicatorService {
         return doRequest("localhost", "command=volume&val="+volume);
     }
 
+    public ResponseEntity<String> setTime(int percentage) {
+        return doRequest("localhost", "command=seek&val="+percentage+"%");
+    }
+
     public ResponseEntity<String> fullScreen() {
         return doRequest("localhost", "command=fullscreen");
     }

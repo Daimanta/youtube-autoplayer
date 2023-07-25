@@ -66,6 +66,12 @@ public class RequestController {
     }
 
     @CrossOrigin
+    @GetMapping("/settime")
+    public void setTime(@RequestParam(required = true) int value) {
+        requestService.setTime(value);
+    }
+
+    @CrossOrigin
     @GetMapping("/emptyplaylist")
     public void emptyPlaylist() {
         requestService.emptyPlaylist();

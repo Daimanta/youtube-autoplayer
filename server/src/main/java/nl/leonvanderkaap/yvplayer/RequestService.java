@@ -89,6 +89,13 @@ public class RequestService {
         }));
     }
 
+    public void setTime(int percentage) {
+        executor.execute(new ApplicationFutureTask<>(() -> {
+            vlcCommunicatorService.setTime(percentage);
+            return null;
+        }));
+    }
+
     public void fullScreen() {
         executor.execute(new ApplicationFutureTask<>(() -> {
             vlcCommunicatorService.fullScreen();

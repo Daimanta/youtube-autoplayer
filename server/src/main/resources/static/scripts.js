@@ -50,13 +50,23 @@ function playItem(itemId) {
 
 function setVolume() {
     const value = document.getElementById("volume_slider_id").value;
-    fetch('api/setvolume?value=' + document.getElementById("volume_slider_id").value);
-    document.getElementById("volume_value_id").textContent = value;
+    fetch('api/setvolume?value=' + value).then(() => {
+        document.getElementById("volume_value_id").textContent = value + "%";
+        }
+    )
 }
 
 function updateValue() {
     document.getElementById("volume_value_id").textContent = document.getElementById("volume_slider_id").value;
 }
+
+function setTime() {
+    const value = document.getElementById("playback_slider_id").value;
+    fetch('api/settime?value=' + value).then(() => {
+        updatePageState();
+    });
+}
+
 
 function getPlaylist() {
     fetch('api/getplaylist').then(async (response) => {
@@ -117,14 +127,21 @@ function lengthString(duration) {
     }
 }
 
-function executeOnPageLoad() {
+function updatePageState() {
     fetch("api/vlcstatus").then(
         async (response) => {
             const data = await response.json();
             const volume = Math.floor((data.volume / 512.0) * 200.0);
+            const playPosition = Math.floor(data.length * data.position);
             document.getElementById("volume_slider_id").value = volume;
-            document.getElementById("volume_value_id").textContent = volume;
+            document.getElementById("volume_value_id").textContent = (volume + "%");
+            document.getElementById("playback_slider_id").value = data.position * 100;
+            document.getElementById("playback_slider_text_id").textContent = lengthString(playPosition);
         }
     );
     getPlaylist();
+}
+
+function executeOnPageLoad() {
+    updatePageState();
 }

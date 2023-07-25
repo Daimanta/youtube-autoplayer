@@ -11,4 +11,6 @@ public class VlcStatusInfo {
     private String volume;
     private String currentplid;
     private String state;
+    private int length;
+    private double position;
 }
