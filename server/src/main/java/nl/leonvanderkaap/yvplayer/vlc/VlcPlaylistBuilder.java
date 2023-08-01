@@ -10,6 +10,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @Slf4j
@@ -31,8 +32,15 @@ public class VlcPlaylistBuilder {
         try {
             responseEntity = restTemplate.getForEntity("https://sponsor.ajay.app/api/skipSegments?videoID=" + video, SponsorBlockVideoSegmentResponse[].class, Collections.emptyMap());
         } catch (Exception ignored) {}
+
+
+
         try {
-            return buildPlaylistFile(responseEntity, fullPath, title, fileIdName, duration);
+            if (responseEntity != null && responseEntity.getStatusCode().is2xxSuccessful() && responseEntity.getBody() != null) {
+                return buildSponsorBlockPlaylist(responseEntity.getBody(), fullPath, title, fileIdName, duration);
+            } else {
+                return buildPlaylistFile(fullPath, title, fileIdName, duration);
+            }
         } catch (Exception e) {
             try {
                 return buildPlaylistFile(fullPath, title, fileIdName, duration);
@@ -40,14 +48,6 @@ public class VlcPlaylistBuilder {
                 log.warn("Could not construct playback file");
                 return null;
             }
-        }
-    }
-
-    private String buildPlaylistFile(ResponseEntity<SponsorBlockVideoSegmentResponse[]> responseEntity, String fullPath, String title, String id, int duration) throws IOException {
-        if (responseEntity != null && responseEntity.getStatusCode().is2xxSuccessful() && responseEntity.getBody() != null) {
-            return buildSponsorBlockPlaylist(responseEntity.getBody(), fullPath, title, id, duration);
-        } else {
-            return buildPlaylistFile(fullPath, title, id, duration);
         }
     }
 
@@ -76,18 +76,15 @@ public class VlcPlaylistBuilder {
         double start = 0.0;
         double end = 0.0;
         builder.append("#EXTM3U'\n");
-        int index = 1;
+        AtomicInteger index = new AtomicInteger(1);
+
         for (SponsorBlockVideoSegmentResponse segment: segments) {
             end = segment.getSegment().get(0);
-            addPlaylistTitleSegment(builder, (int) (end - start), index++, title);
-            addPlaylistStartSegment(builder, start);
-            addPlaylistEndSegment(builder, end);
-            addPlaylistFilenameSegment(builder, id);
+            addCombinedSegment(builder, start, end, index.getAndIncrement(), title, id, false);
             start = segment.getSegment().get(1);
         }
-        addPlaylistTitleSegment(builder, duration-(int)start, index, title);
-        addPlaylistStartSegment(builder, start);
-        addPlaylistFilenameSegment(builder, id);
+
+        addCombinedSegment(builder, start, duration, index.get(), title, id, true);
 
         return createFileFromFullPath(fullPath, builder.toString());
     }
@@ -105,6 +102,18 @@ public class VlcPlaylistBuilder {
             return String.format("%02d:%02d", minutes, seconds);
         } else {
             return "00:" + String.format("%02d", duration);
+        }
+    }
+
+    private void addCombinedSegment(StringBuilder builder, double start, double end, int index, String title, String id, boolean last) {
+        int length = (int) (end - start);
+        if (length > 1) {
+            addPlaylistTitleSegment(builder, length, index, title);
+            addPlaylistStartSegment(builder, start);
+            if (!last) {
+                addPlaylistEndSegment(builder, end);
+            }
+            addPlaylistFilenameSegment(builder, id);
         }
     }
 

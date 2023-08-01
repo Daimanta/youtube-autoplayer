@@ -35,11 +35,15 @@ function emptyPlaylist() {
     setTimeout(getPlaylist, 400);
 }
 
-function addToQueue() {
+function addToQueueAndPlay(doPlay) {
     const queueInputElement = document.getElementById("queue_input_id");
     const video = queueInputElement.value || null;
     if (video == null) return;
-    fetch('api/queue?video=' + video);
+    if (doPlay) {
+        fetch('api/queue?video=' + video + "&play=true");
+    } else {
+        fetch('api/queue?video=' + video);
+    }
     queueInputElement.value = "";
 }
 

@@ -26,7 +26,8 @@ window.setInterval(updatePageState, 10_000);
 <button type="button" class="textbutton" onclick="emptyPlaylist()">Empty playlist</button>
 <br>
 <input type="text" id="queue_input_id" style="width:30em">
-<button type="button" class="textbutton" onclick="addToQueue()">Add to queue</button>
+<button type="button" class="textbutton" onclick="addToQueueAndPlay(false)">Add to queue</button>
+<button type="button" class="textbutton" onclick="addToQueueAndPlay(true)">Add to queue and playback</button>
 <br>
 <table id="playlist_table_id">
     <thead>

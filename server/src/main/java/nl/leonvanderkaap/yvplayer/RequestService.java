@@ -33,8 +33,8 @@ public class RequestService {
     private final StatusService statusService;
 
 
-    public void queueVideo(String video) {
-        executor.execute(getVideoQueueFuture(video));
+    public void queueVideo(String video, boolean playAfterQueue) {
+        executor.execute(getVideoQueueFuture(video, playAfterQueue));
     }
 
     public void togglePlay() {
@@ -46,7 +46,10 @@ public class RequestService {
 
     public void play() {
         executor.execute(new ApplicationFutureTask<>(() -> {
-            vlcCommunicatorService.play();
+            VlcStatusInfo info = vlcCommunicatorService.getStatus();
+            if (info.getState() == null || !info.getState().equals("playing")) {
+                vlcCommunicatorService.play();
+            }
             return null;
         }));
     }
@@ -163,7 +166,7 @@ public class RequestService {
         return new PlaylistInfo(Integer.parseInt(currentIdString), state, items);
     }
 
-    private FutureTask<Void> getVideoQueueFuture(String video) {
+    private FutureTask<Void> getVideoQueueFuture(String video, boolean playAfterQueue) {
         return new ApplicationFutureTask<>(() -> {
             FileQueueService fileQueueService;
             if (video.contains("youtube.com") || (video.length() < 13)) {
@@ -176,6 +179,9 @@ public class RequestService {
                 return null;
             }
             fileQueueService.downloadAndQueueVideo(video);
+            if (playAfterQueue) {
+                play();
+            }
             return null;
         });
     }
