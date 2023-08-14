@@ -48,7 +48,7 @@ public class RequestService {
         executor.execute(new ApplicationFutureTask<>(() -> {
             VlcStatusInfo info = vlcCommunicatorService.getStatus();
             if (info.getState() == null || !info.getState().equals("playing")) {
-                vlcCommunicatorService.play();
+                vlcCommunicatorService.next();
             }
             return null;
         }));
