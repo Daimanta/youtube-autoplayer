@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor
@@ -40,12 +41,24 @@ public class VlcPlaylistInfo {
         private String duration;
     }
 
-    public List<PlaylistItem> toPlaylistItems() {
+    public List<PlaylistItem> toPlaylistItems(Map<String, SupplementalItemInfo> supplementalInformation) {
         List<PlaylistItem> result = new ArrayList<>();
         ListDetails listDetails = this.item.getItem().get(0);
         if (listDetails == null || listDetails.getItem() == null) return result;
         for (ItemDetails itemDetails: listDetails.getItem()) {
-            result.add(new PlaylistItem(itemDetails.id, itemDetails.name, Integer.parseInt(itemDetails.duration)));
+            PlaylistItem item = null;
+            if (itemDetails.duration.equals("-1") && supplementalInformation != null) {
+                SupplementalItemInfo supplementalInfo = supplementalInformation.get(itemDetails.getName());
+                if (supplementalInfo != null) {
+                    item = new PlaylistItem(itemDetails.id, supplementalInfo.getTitle(), supplementalInfo.getDuration());
+                } else {
+                    item = new PlaylistItem(itemDetails.id, itemDetails.name, Integer.parseInt(itemDetails.duration));
+                }
+            } else {
+                item = new PlaylistItem(itemDetails.id, itemDetails.name, Integer.parseInt(itemDetails.duration));
+            }
+
+            result.add(item);
         }
         return result;
     }

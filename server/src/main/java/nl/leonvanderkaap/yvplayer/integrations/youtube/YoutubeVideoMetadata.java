@@ -16,6 +16,7 @@ public class YoutubeVideoMetadata {
     private String id;
     private String title;
     private List<YoutubeVideoMetadataFormat> formats;
+    private int duration;
 
 
     @NoArgsConstructor

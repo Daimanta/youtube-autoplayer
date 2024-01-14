@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.RequiredArgsConstructor;
 import nl.leonvanderkaap.yvplayer.commons.LiveSettings;
+import nl.leonvanderkaap.yvplayer.commons.exceptions.InternalErrorException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -89,7 +90,13 @@ public class VlcCommunicatorService {
     }
 
     public VlcStatusInfo getStatus() {
-        ResponseEntity<String> responseString = doRequest("localhost", null);
+        ResponseEntity<String> responseString;
+        try {
+            responseString = doRequest("localhost", null);
+        } catch (Exception e) {
+            throw new InternalErrorException("Failed to connect to vlc");
+        }
+
         XmlMapper xmlMapper = new XmlMapper();
         try {
             return xmlMapper.readValue(responseString.getBody(), VlcStatusInfo.class);

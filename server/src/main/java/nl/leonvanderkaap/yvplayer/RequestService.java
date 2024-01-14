@@ -154,7 +154,7 @@ public class RequestService {
         XmlMapper xmlMapper = new XmlMapper();
         try {
             VlcPlaylistInfo vlcPlaylistInfo = xmlMapper.readValue(playlistXmlString, VlcPlaylistInfo.class);
-            items = new ArrayList<>(vlcPlaylistInfo.toPlaylistItems());
+            items = new ArrayList<>(vlcPlaylistInfo.toPlaylistItems(SupplementalItemInfo.SUPPLEMENTAL_INFO));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

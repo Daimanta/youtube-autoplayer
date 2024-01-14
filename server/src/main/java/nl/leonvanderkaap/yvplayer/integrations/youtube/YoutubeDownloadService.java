@@ -32,7 +32,7 @@ public class YoutubeDownloadService {
         List<String> downloadArgumentList = new ArrayList<>();
         downloadArgumentList.add(LiveSettings.ytdlp);
         downloadArgumentList.add(wrap(video));
-        downloadArgumentList.add("--write-info-json");
+        downloadArgumentList.addAll(List.of("--write-info-json", "--write-comments", "--write-subs"));
         downloadArgumentList.addAll(List.of("-P", wrap(folderPath), "-o", wrap(fileName)));
         downloadArgumentList.addAll(List.of("-f", String.format(wrap("best[height<=%s]"), LiveSettings.maxResolution)));
         String[] downloadArguments = downloadArgumentList.toArray(new String[]{});

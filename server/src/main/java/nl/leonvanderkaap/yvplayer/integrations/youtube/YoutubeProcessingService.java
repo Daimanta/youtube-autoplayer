@@ -1,11 +1,13 @@
 package nl.leonvanderkaap.yvplayer.integrations.youtube;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.leonvanderkaap.yvplayer.FileQueueService;
 import nl.leonvanderkaap.yvplayer.commons.LiveSettings;
 import nl.leonvanderkaap.yvplayer.management.StatusService;
+import nl.leonvanderkaap.yvplayer.vlc.SupplementalItemInfo;
 import nl.leonvanderkaap.yvplayer.vlc.VlcCommunicatorService;
 import nl.leonvanderkaap.yvplayer.vlc.VlcPlaylistBuilder;
 import org.springframework.http.*;
@@ -42,12 +44,13 @@ public class YoutubeProcessingService implements FileQueueService {
     }
 
     private void queueVideo(String fullPath, String fileIdName) {
-        String playListLocation = buildPlaylist(fullPath, fileIdName);
+        FileListInformation playListLocation = buildPlaylist(fullPath, fileIdName);
         if (playListLocation == null) return;
-        ResponseEntity<String> response = vlcCommunicatorService.addItemToPlayList(playListLocation);
+        SupplementalItemInfo.SUPPLEMENTAL_INFO.put(playListLocation.fileLocation.substring(playListLocation.fileLocation.lastIndexOf(File.separator) + 1), new SupplementalItemInfo(playListLocation.fileLocation, playListLocation.title, playListLocation.duration));
+        ResponseEntity<String> response = vlcCommunicatorService.addItemToPlayList(playListLocation.fileLocation);
     }
 
-    private String buildPlaylist(String fullPath, String fileIdName) {
+    private FileListInformation buildPlaylist(String fullPath, String fileIdName) {
         ObjectMapper objectMapper = new ObjectMapper();
         String title;
         try {
@@ -56,16 +59,16 @@ public class YoutubeProcessingService implements FileQueueService {
             title = node.getTitle();
             int duration = -1;
             try {
-                duration = (int) node.getFormats().get(0).getFragments().get(0).getDuration();
+                duration = node.getDuration();
             } catch (Exception e) {
                 e.printStackTrace();
             }
             if (LiveSettings.blockSponsors) {
                 statusService.addedToQueue(title);
-                return vlcPlaylistBuilder.buildSponsorCheckedPlayListFile(node.getId(), fullPath, title, fileIdName, duration);
+                return new FileListInformation(title, duration, vlcPlaylistBuilder.buildSponsorCheckedPlayListFile(node.getId(), fullPath, title, fileIdName, duration));
             } else {
                 statusService.addedToQueue(title);
-                return vlcPlaylistBuilder.buildRegularPlaylistFile(fullPath, title, fileIdName, duration);
+                return new FileListInformation(title, duration, vlcPlaylistBuilder.buildRegularPlaylistFile(fullPath, title, fileIdName, duration));
             }
 
         } catch (IOException e) {
@@ -74,4 +77,17 @@ public class YoutubeProcessingService implements FileQueueService {
         }
     }
 
+
+    @Getter
+    private static class FileListInformation {
+        private String title;
+        private int duration;
+        private String fileLocation;
+
+        public FileListInformation(String title, int duration, String fileLocation) {
+            this.title = title;
+            this.duration = duration;
+            this.fileLocation = fileLocation;
+        }
+    }
 }
