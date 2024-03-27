@@ -39,12 +39,16 @@ function addToQueueAndPlay(doPlay) {
     const queueInputElement = document.getElementById("queue_input_id");
     const video = queueInputElement.value || null;
     if (video == null) return;
-    if (doPlay) {
-        fetch('api/queue?video=' + video + "&play=true");
-    } else {
-        fetch('api/queue?video=' + video);
-    }
+    addToQueueAndPlayUrl(video, doPlay);
     queueInputElement.value = "";
+}
+
+function addToQueueAndPlayUrl(url, doPlay) {
+    if (doPlay) {
+        fetch('api/queue?video=' + url + "&play=true");
+    } else {
+        fetch('api/queue?video=' + url);
+    }
 }
 
 function playItem(itemId) {
@@ -131,6 +135,27 @@ function lengthString(duration) {
     }
 }
 
+function updateCounter() {
+    counter++;
+    document.getElementById("display_label_id").textContent = "(" + counter + ")";
+}
+
+function isValidUrl(string) {
+    return (string.startsWith("http") && string.includes("://")) || (string.includes("youtube.com"));
+}
+async function clipboardCopy() {
+    const auto_copy = document.getElementById("auto_copy_checkbox_id").checked;
+    if (!auto_copy) return;
+    if (navigator.clipboard.readText === undefined) return;
+    try {
+        const text = await navigator.clipboard.readText();
+        if (!isValidUrl(text)) return;
+        addToQueueAndPlayUrl(text, true);
+        await navigator.clipboard.writeText("");
+        updateCounter();
+    } catch (exception) {}
+}
+
 function updatePageState() {
     fetch("api/vlcstatus").then(
         async (response) => {
@@ -144,8 +169,12 @@ function updatePageState() {
         }
     );
     getPlaylist();
+    clipboardCopy();
 }
+
+let counter = 0;
 
 function executeOnPageLoad() {
     updatePageState();
+    updateCounter();
 }
