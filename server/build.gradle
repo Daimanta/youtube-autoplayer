@@ -29,6 +29,29 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+bootJar {
+    into("BOOT-INF/classes/static") {
+        from("${project(':frontend').projectDir}/src")
+    }
+
+    manifest {
+        attributes 'Implementation-Gitcommit': getCheckedOutGitCommitHash()
+    }
+}
+
 bootRun {
     systemProperties = System.properties
+}
+
+def getCheckedOutGitCommitHash() {
+    def gitFolder = "$rootDir/.git/"
+    def takeFromHash = 12
+    def file = new File(gitFolder + "HEAD")
+    if (!file.exists()) return "No Git"
+    def head = file.text.split(":")
+    def isCommit = head.length == 1
+    if(isCommit) return head[0].trim().take(takeFromHash)
+    def refHead = new File(gitFolder + head[1].trim())
+    if (!refHead.exists()) return "No Git"
+    refHead.text.trim().take takeFromHash
 }

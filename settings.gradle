@@ -1,2 +1,2 @@
 rootProject.name = 'yvplayer'
-include("server", "firefoxplugin")
+include("server", "firefoxplugin", "frontend")

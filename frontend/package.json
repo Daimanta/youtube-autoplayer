@@ -1,0 +1,14 @@
+{
+  "name": "frontend",
+  "module": "index.html",
+  "type": "module",
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "http-server": "^14.1.1"
+  }
+}
