@@ -37,7 +37,7 @@ public class YoutubeDownloadService {
         downloadArgumentList.add(wrap(video));
         downloadArgumentList.addAll(List.of("--write-info-json", "--write-comments", "--write-subs"));
         downloadArgumentList.addAll(List.of("-P", wrap(folderPath), "-o", wrap(fileName)));
-        downloadArgumentList.addAll(List.of("-f", String.format(wrap("best[height<=%s]"), LiveSettings.maxResolution)));
+        downloadArgumentList.addAll(List.of("-S", String.format(wrap("height:%s"), LiveSettings.maxResolution)));
         String[] downloadArguments = downloadArgumentList.toArray(new String[]{});
 
         ProcessBuilder downloadProcessBuilder = new ProcessBuilder(downloadArguments);
