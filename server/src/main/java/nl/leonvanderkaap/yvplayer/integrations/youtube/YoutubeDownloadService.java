@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @Slf4j
@@ -49,8 +50,11 @@ public class YoutubeDownloadService {
             if (!errorString.isEmpty()) {
                 log.warn(errorString);
             }
-            Process downloadResult = downloadProcess.onExit().get();
-            if (downloadResult.exitValue() != 0) throw new RuntimeException();
+            CompletableFuture<Process> future = downloadProcess.onExit();
+            if (future != null) {
+                Process downloadResult = future.get();
+                if (downloadResult.exitValue() != 0) throw new RuntimeException();
+            }
         } catch (Exception e) {
             log.warn("Download failed: ", e);
             return Optional.empty();
