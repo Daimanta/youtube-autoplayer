@@ -10,9 +10,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -53,7 +55,10 @@ public class YoutubeDownloadService {
             CompletableFuture<Process> future = downloadProcess.onExit();
             if (future != null) {
                 Process downloadResult = future.get();
-                if (downloadResult.exitValue() != 0) throw new RuntimeException();
+                if (downloadResult.exitValue() != 0) {
+                    log.error(String.format("Failed to download video. Program arguments : %s", String.join(" ", downloadArgumentList)));
+                    throw new RuntimeException();
+                }
             }
         } catch (Exception e) {
             log.warn("Download failed: ", e);
