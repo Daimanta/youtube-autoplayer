@@ -35,7 +35,7 @@ public class YoutubeDownloadService {
         List<String> downloadArgumentList = new ArrayList<>();
         downloadArgumentList.add(LiveSettings.ytdlp);
         downloadArgumentList.add(wrap(video));
-        downloadArgumentList.addAll(List.of("--write-info-json", "--write-comments", "--write-subs"));
+        downloadArgumentList.addAll(List.of("--write-info-json", "--write-subs", "-q"));
         downloadArgumentList.addAll(List.of("-P", wrap(folderPath), "-o", wrap(fileName)));
         downloadArgumentList.addAll(List.of("-S", String.format(wrap("height:%s"), LiveSettings.maxResolution)));
         String[] downloadArguments = downloadArgumentList.toArray(new String[]{});
@@ -64,6 +64,15 @@ public class YoutubeDownloadService {
             log.warn("Download failed: ", e);
             return Optional.empty();
         }
+
+        // Yt-dlp stopped accepting fixed names, which forces a rework or in this case a rename to the desired name
+        String realFileName = findFilename(folderPath, fileName);
+        if (!realFileName.equals(fileName)) {
+            File target = new File(folderPath+File.separator+fileName);
+            File source = new File(folderPath+File.separator+realFileName);
+            source.renameTo(target);
+        }
+
         return Optional.of(new FileInformation(folderPath+File.separator+fileName, fileName));
     }
 
@@ -82,5 +91,15 @@ public class YoutubeDownloadService {
             stringBuilder.append(errorLine);
         }
         return stringBuilder.toString();
+    }
+
+    private static String findFilename(String path, String desired) {
+        File folder = new File(path);
+        for (String fileName: folder.list()) {
+            if (fileName.contains(desired) && !fileName.contains(".info")) {
+                return fileName;
+            }
+        }
+        return desired;
     }
 }
