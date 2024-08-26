@@ -32,20 +32,34 @@ window.setInterval(updatePageState, 2_000);
 <button type="button" class="textbutton" onclick="addToQueueAndPlay(false)">Add to queue</button>
 <button type="button" class="textbutton" onclick="addToQueueAndPlay(true)">Add to queue and playback</button>
 <br>
-<table id="playlist_table_id">
-    <thead>
-    <tr>
-        <th>-</th>
-        <th>Name</th>
-        <th>Duration</th>
-    </tr>
-    </thead>
-    <tbody id="playlist_table_body_id">
-    <tr>
-        <th>-</th>
-        <th>-</th>
-        <th>-</th>
-    </tr>
-    </tbody>
-</table>
+<div>
+    <table id="playlist_table_id" style="float: left">
+        <thead>
+        <tr>
+            <th>-</th>
+            <th>Name</th>
+            <th>Duration</th>
+        </tr>
+        </thead>
+        <tbody id="playlist_table_body_id">
+        <tr>
+            <th>-</th>
+            <th>-</th>
+            <th>-</th>
+        </tr>
+        </tbody>
+    </table>
+    <table id="download_table_id">
+        <thead>
+        <tr>
+            <th>Currently downloading</th>
+        </tr>
+        </thead>
+        <tbody id="download_table_body_id">
+        <tr>
+            <th>-</th>
+        </tr>
+        </tbody>
+    </table>
+</div>
 </html>

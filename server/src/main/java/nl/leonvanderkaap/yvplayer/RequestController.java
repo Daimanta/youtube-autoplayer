@@ -95,6 +95,11 @@ public class RequestController {
         return requestService.getStatus();
     }
 
+    @CrossOrigin
+    @GetMapping(value = "/downloading", produces = APPLICATION_JSON_VALUE)
+    public List<String> getCurrentlyDownloading() {
+        return requestService.getCurrentlyDownloading();
+    }
 
     @CrossOrigin
     @GetMapping(value = "/vlcstatus", produces = APPLICATION_JSON_VALUE)

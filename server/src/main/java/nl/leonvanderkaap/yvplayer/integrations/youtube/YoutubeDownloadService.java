@@ -1,5 +1,6 @@
 package nl.leonvanderkaap.yvplayer.integrations.youtube;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import nl.leonvanderkaap.yvplayer.commons.LiveSettings;
 import org.apache.commons.lang3.SystemUtils;
@@ -9,16 +10,16 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class YoutubeDownloadService {
+
+    @Getter
+    private Map<String, String> downloadingMap = new HashMap<>();
 
     public Optional<FileInformation> download(String video) {
         if (video == null || video.isBlank()) return Optional.empty();
@@ -31,6 +32,25 @@ public class YoutubeDownloadService {
         }
 
         String folderPath = LiveSettings.getDownloadFolder();
+
+        List<String> prefetchArgumentsList = new ArrayList<>();
+        prefetchArgumentsList.add(LiveSettings.ytdlp);
+        prefetchArgumentsList.add(wrap(video));
+        prefetchArgumentsList.add("--skip-download");
+        prefetchArgumentsList.add("--print");
+        prefetchArgumentsList.add("%(title)s -- %(id)s");
+        String[] prefetchArguments = prefetchArgumentsList.toArray(new String[0]);
+
+        ProcessBuilder prefectProcessBuilder = new ProcessBuilder(prefetchArguments);
+        try {
+            Process downloadProcess = prefectProcessBuilder.start();
+            BufferedReader in = new BufferedReader(new InputStreamReader(downloadProcess.getInputStream()));
+            String downloadInfo = collectStream(in);
+            downloadingMap.put(targetFileName, downloadInfo);
+        } catch (Exception e) {
+            log.warn("Download failed: ", e);
+            return Optional.empty();
+        }
 
         List<String> downloadArgumentList = new ArrayList<>();
         downloadArgumentList.add(LiveSettings.ytdlp);
@@ -63,6 +83,8 @@ public class YoutubeDownloadService {
         } catch (Exception e) {
             log.warn("Download failed: ", e);
             return Optional.empty();
+        } finally {
+            downloadingMap.remove(targetFileName);
         }
 
         // Yt-dlp stopped accepting fixed names, which forces a rework or in this case a rename to the desired name
@@ -95,11 +117,19 @@ public class YoutubeDownloadService {
 
     private static String findFilename(String path, String desired) {
         File folder = new File(path);
-        for (String fileName: folder.list()) {
+        String[] fileList = folder.list();
+        for (String fileName: fileList) {
+            if (fileName.contains(desired) && fileName.endsWith(".mp4")) {
+                return fileName;
+            }
+        }
+        //Fallback if mp4 doesn't work
+        for (String fileName: fileList) {
             if (fileName.contains(desired) && !fileName.contains(".info")) {
                 return fileName;
             }
         }
+
         return desired;
     }
 }

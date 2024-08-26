@@ -168,6 +168,33 @@ function updatePageState() {
             document.getElementById("playback_slider_text_id").textContent = lengthString(playPosition);
         }
     );
+    fetch("api/downloading").then(
+        async (response) => {
+            const data = await response.json();
+            const table_body = document.getElementById("download_table_body_id");
+            table_body.innerHTML = "";
+            if (data.length === 0) {
+                const row = document.createElement("tr");
+                let i = 0;
+                while (i < 1) {
+                    const col = document.createElement("td");
+                    col.textContent = "-";
+                    row.appendChild(col);
+                    i++;
+                }
+                table_body.appendChild(row);
+            } else {
+                for (let entry of data) {
+                    const row = document.createElement("tr");
+                    const name = document.createElement("td");
+                    name.textContent = entry;
+                    row.appendChild(name);
+                    table_body.appendChild(row);
+                }
+            }
+        }
+    );
+
     getPlaylist();
     clipboardCopy();
 }

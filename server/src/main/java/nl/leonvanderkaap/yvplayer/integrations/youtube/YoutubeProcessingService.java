@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -41,6 +42,10 @@ public class YoutubeProcessingService implements FileQueueService {
         queueVideo(fileInformation.path(), fileInformation.fileId());
         File target = new File(fileInformation.path());
         target.deleteOnExit();
+    }
+
+    public List<String> getCurrentlyDownloading() {
+        return youtubeDownloadService.getDownloadingMap().values().stream().toList();
     }
 
     private void queueVideo(String fullPath, String fileIdName) {
