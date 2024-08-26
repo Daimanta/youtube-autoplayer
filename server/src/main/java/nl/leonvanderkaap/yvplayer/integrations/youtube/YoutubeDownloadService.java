@@ -23,11 +23,11 @@ public class YoutubeDownloadService {
     public Optional<FileInformation> download(String video) {
         if (video == null || video.isBlank()) return Optional.empty();
         int index = video.indexOf("watch?v=");
-        String fileName;
+        String targetFileName;
         if (index == -1) {
-            fileName = video;
+            targetFileName = video;
         } else {
-            fileName = video.substring(index+"watch?v=".length());
+            targetFileName = video.substring(index+"watch?v=".length());
         }
 
         String folderPath = LiveSettings.getDownloadFolder();
@@ -36,7 +36,7 @@ public class YoutubeDownloadService {
         downloadArgumentList.add(LiveSettings.ytdlp);
         downloadArgumentList.add(wrap(video));
         downloadArgumentList.addAll(List.of("--write-info-json", "--write-subs", "-q"));
-        downloadArgumentList.addAll(List.of("-P", wrap(folderPath), "-o", wrap(fileName)));
+        downloadArgumentList.addAll(List.of("-P", wrap(folderPath), "-o", wrap(targetFileName)));
         downloadArgumentList.addAll(List.of("-S", String.format(wrap("height:%s"), LiveSettings.maxResolution)));
         String[] downloadArguments = downloadArgumentList.toArray(new String[]{});
 
@@ -66,14 +66,14 @@ public class YoutubeDownloadService {
         }
 
         // Yt-dlp stopped accepting fixed names, which forces a rework or in this case a rename to the desired name
-        String realFileName = findFilename(folderPath, fileName);
-        if (!realFileName.equals(fileName)) {
-            File target = new File(folderPath+File.separator+fileName);
+        String realFileName = findFilename(folderPath, targetFileName);
+        if (!realFileName.equals(targetFileName)) {
+            File target = new File(folderPath+File.separator+targetFileName);
             File source = new File(folderPath+File.separator+realFileName);
             source.renameTo(target);
         }
 
-        return Optional.of(new FileInformation(folderPath+File.separator+fileName, fileName));
+        return Optional.of(new FileInformation(folderPath+File.separator+targetFileName, targetFileName));
     }
 
     private static String wrap(String str) {
