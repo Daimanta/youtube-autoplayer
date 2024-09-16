@@ -119,7 +119,7 @@ public class YoutubeDownloadService {
         File folder = new File(path);
         String[] fileList = folder.list();
         for (String fileName: fileList) {
-            if (fileName.contains(desired) && fileName.endsWith(".mp4")) {
+            if (fileName.contains(desired) && (fileName.endsWith(".mp4") || fileName.endsWith(".webm"))) {
                 return fileName;
             }
         }
