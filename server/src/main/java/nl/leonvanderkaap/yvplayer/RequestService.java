@@ -166,6 +166,10 @@ public class RequestService {
         return new PlaylistInfo(Integer.parseInt(currentIdString), state, items);
     }
 
+    public List<String> getCurrentlyDownloading() {
+        return youtubeProcessingService.getCurrentlyDownloading();
+    }
+
     private FutureTask<Void> getVideoQueueFuture(String video, boolean playAfterQueue) {
         return new ApplicationFutureTask<>(() -> {
             FileQueueService fileQueueService;
@@ -185,5 +189,7 @@ public class RequestService {
             return null;
         });
     }
+
+
 
 }
