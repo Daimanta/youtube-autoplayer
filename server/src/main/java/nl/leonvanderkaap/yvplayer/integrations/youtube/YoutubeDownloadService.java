@@ -77,7 +77,7 @@ public class YoutubeDownloadService {
                 Process downloadResult = future.get();
                 if (downloadResult.exitValue() != 0) {
                     log.error(String.format("Failed to download video. Program arguments : %s", String.join(" ", downloadArgumentList)));
-                    throw new RuntimeException();
+                    return Optional.empty();
                 }
             }
         } catch (Exception e) {
