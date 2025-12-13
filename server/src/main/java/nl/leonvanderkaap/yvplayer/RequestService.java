@@ -5,6 +5,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.leonvanderkaap.yvplayer.commons.ApplicationFutureTask;
+import nl.leonvanderkaap.yvplayer.integrations.file.LocalFileProcessingService;
 import nl.leonvanderkaap.yvplayer.integrations.http.HttpProcessingService;
 import nl.leonvanderkaap.yvplayer.integrations.smb.SmbProcessingService;
 import nl.leonvanderkaap.yvplayer.management.MessageLog;
@@ -30,6 +31,7 @@ public class RequestService {
     private final YoutubeProcessingService youtubeProcessingService;
     private final SmbProcessingService smbProcessingService;
     private final HttpProcessingService httpProcessingService;
+    private final LocalFileProcessingService localFileProcessingService;
     private final StatusService statusService;
 
 
@@ -179,6 +181,8 @@ public class RequestService {
                 fileQueueService = smbProcessingService;
             } else if (video.startsWith("http://") || video.startsWith("https://")) {
                 fileQueueService = httpProcessingService;
+            } else if (video.startsWith("file://")) {
+                fileQueueService = localFileProcessingService;
             } else {
                 return null;
             }
